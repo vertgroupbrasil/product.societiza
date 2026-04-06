@@ -2,312 +2,193 @@
 
 Skills são comportamentos especializados que o Claude carrega sob demanda.
 Em vez de ter um assistente genérico, cada skill transforma o Claude em um
-especialista para um contexto específico: planejar features, fazer deploy,
-gerar conteúdo social, construir interfaces, etc.
+especialista para um contexto específico.
+
+Este projeto tem duas skills principais: uma para planejar produto e outra
+para planejar implementação de código.
 
 ---
 
-## Como funciona
+## Como ativar uma skill
 
-Quando você invoca uma skill, o Claude:
+Você não usa comando nenhum. Basta descrever o que quer fazer em linguagem
+natural. O Claude identifica qual skill é adequada e a ativa automaticamente.
 
-1. Carrega o arquivo `SKILL.md` daquela skill
-2. Lê todos os arquivos de referência indicados no SKILL.md
-3. Segue o protocolo definido na skill — fazendo perguntas, carregando
-   contexto do projeto, ou executando ações em sequência
-4. Responde já operando dentro do especialismo daquela skill
-
-Skills são **stateful dentro da conversa**: uma vez ativada, a skill permanece
-no contexto enquanto a conversa durar.
-
----
-
-## Como invocar uma skill
-
-### Via `/` (slash command)
-
-Digite `/` seguido do nome da skill. Você pode passar um argumento opcional:
+Exemplos:
 
 ```
-/societiza-feature-plan auth
-/societiza-product-plan notificações
-/deploy-to-vercel
-/social-content
-/frontend-design
+"quero planejar a feature de notificações"
+"preciso de uma especificação de produto para o portal do cliente"
+"vamos implementar o kanban, me ajuda a planejar"
+"quero definir o que seria a feature de relatórios antes de codar"
 ```
-
-### Via descrição natural
-
-Se você descrever uma tarefa que corresponde ao gatilho de uma skill, o Claude
-ativa a skill automaticamente. Por exemplo:
-
-- "quero planejar a feature de kanban" → ativa `societiza-feature-plan`
-- "faz deploy da aplicação" → ativa `deploy-to-vercel`
-- "cria um post para o LinkedIn" → ativa `social-content`
 
 ---
 
-## Skills disponíveis neste projeto
+## `societiza-product-plan`
 
-### `societiza-feature-plan`
+**Para usar:** Descreva uma ideia ou feature que você quer pensar antes de
+construir.
 
-**O que faz:** Planejamento de implementação de código para features do
-Societiza. Lê as regras de código (frontend ou backend), entende o contexto
-de negócio da feature, e gera um plano de implementação completo com arquivos,
-ordem de criação e verificação.
+### O que faz
 
-**Quando usar:** Quando você sabe o que precisa construir e quer um plano
-técnico antes de escrever código.
+Planeja produto com mentalidade Steve Jobs. Antes de escrever uma linha de
+código, responde a pergunta mais importante: **essa feature deve existir, e se
+sim, o que exatamente ela deve ser?**
 
-**Fluxo:**
+Não produz código, arquitetura, ou decisões técnicas. Só produto: o usuário,
+o problema, a experiência, o fit com o produto, e os custos.
 
-1. Pergunta qual feature
-2. Busca a regra de negócio em `docs/`
-3. Pergunta: frontend ou backend?
-4. Carrega todas as regras de código correspondentes
+### Quando usar
+
+- Quando você tem uma ideia mas não sabe se vale construir
+- Quando quer definir o escopo antes de entrar no código
+- Quando precisa de um documento de especificação para alinhar expectativas
+
+### O que a skill faz internamente
+
+1. Lê `docs/business-context.md` e `docs/feature-map.md` para entender o
+   produto atual
+2. Analisa o problema real, para quem é, o fit com o produto, e o custo
+3. Gera um documento de especificação salvo em:
+
+```
+docs/features/product/[nome-da-feature].md
+```
+
+### O que o documento gerado contém
+
+- Visão da feature (na linguagem do usuário, sem jargão técnico)
+- Problema que resolve (específico, real, com contexto)
+- Para quem é (qual perfil, em qual situação)
+- Como melhora a experiência atual (antes e depois)
+- Como se conecta com o produto existente (dependências e o que habilita)
+- O que não é — escopo negativo explícito
+- Custos adicionais (se houver serviços externos)
+- Perguntas abertas (decisões não resolvidas)
+
+### Exemplo de conversa
+
+```
+você: "quero planejar a feature de portal do cliente"
+
+Claude: [ativa societiza-product-plan, lê o contexto do produto, faz
+perguntas se necessário, gera docs/features/product/portal-do-cliente.md]
+```
+
+---
+
+## `societiza-feature-plan`
+
+**Para usar:** Diga que quer implementar uma feature específica.
+
+### O que faz
+
+Planeja a implementação de código de uma feature. Lê as regras de código do
+projeto, entende o contexto de negócio da feature, e gera um plano técnico
+completo com arquivos a criar, ordem de implementação e verificação.
+
+### Quando usar
+
+- Quando a feature já está definida (tem especificação de produto ou regra de
+  negócio clara) e você quer planejar o código
+- Antes de começar a implementar qualquer feature nova
+- Quando quer garantir que a implementação vai seguir as regras do projeto
+
+### Pré-requisito
+
+A feature precisa estar definida. Se não houver especificação em
+`docs/features/product/` nem regra de negócio documentada, a skill para e
+redireciona para `societiza-product-plan` primeiro.
+
+Se você tiver a regra de negócio na cabeça mas não documentada, pode fornecer
+manualmente na conversa e a skill aceita isso como base.
+
+### O que a skill faz internamente
+
+1. Busca a regra de negócio da feature em `docs/`
+2. Pergunta: frontend ou backend?
+3. Carrega **todos** os arquivos de regras de código correspondentes:
+   - Frontend: `.agents/skills/societiza-feature-plan/references/frontend-code-rules/`
+   - Backend: `.agents/skills/societiza-feature-plan/references/backend-code-rules/`
+4. Verifica se existe contrato de integração em `docs/integration/`
 5. Gera o plano de implementação
 
-**Exemplo:**
+### O que o plano gerado contém
+
+- **Mapa de integração técnica** — o que já existe no codebase que é relevante
+- **Arquivos a criar ou modificar** — caminho, responsabilidade e justificativa
+  de cada arquivo
+- **Ordem de implementação** — dependências explícitas entre cada passo
+- **Verificação end-to-end** — como confirmar que a feature funciona depois
+
+### Boundary rules (não negociáveis)
+
+**Se backend foi selecionado:** frontend não existe na conversa. Zero menção
+a componentes, hooks, schemas de UI ou caminhos de arquivo frontend.
+
+**Se frontend foi selecionado:** backend é bloqueado por padrão. A skill pode
+sugerir uma melhoria de backend uma única vez se isso impactar diretamente a
+experiência do usuário — mas só se você permitir.
+
+### Exemplo de conversa
 
 ```
-/societiza-feature-plan kanban
-/societiza-feature-plan auth
+você: "vamos implementar a feature de auth, preciso de um plano"
+
+Claude: [ativa societiza-feature-plan, busca regra de negócio de auth,
+pergunta frontend ou backend, carrega todas as regras de código, gera plano]
 ```
 
-**Referências que esta skill usa:**
+---
+
+## Fluxo ideal entre as duas skills
+
+```
+1. societiza-product-plan
+   → define o que a feature é, para quem, e por quê
+   → salva em docs/features/product/[feature].md
+
+2. societiza-feature-plan
+   → lê a especificação gerada
+   → planeja como implementar no código
+   → você aprova o plano
+
+3. implementação
+   → código segue o plano aprovado
+
+4. commit
+   → só depois que você testar e liberar
+```
+
+Nunca pule a etapa 1 achando que a feature "é óbvia". Features sem
+especificação acumulam retrabalho e scope creep.
+
+---
+
+## Onde ficam as regras de código
+
+As regras que a `societiza-feature-plan` carrega ficam em:
 
 ```
 .agents/skills/societiza-feature-plan/references/frontend-code-rules/
-.agents/skills/societiza-feature-plan/references/backend-code-rules/
-docs/business-context.md
-docs/feature-map.md
-docs/features/product/
-docs/integration/
+├── 01-architecture.md
+├── 02-creating-a-feature.md
+├── 03-typescript-and-schemas.md
+├── 04-queries.md
+├── 05-mutations.md
+├── 06-forms.md
+├── 07-components.md
+├── 08-naming-conventions.md
+├── 09-testing.md
+├── 10-imports-and-barrels.md
+├── 11-build-and-quality.md
+├── 12-git-and-commits.md
+├── 13-documentation.md
+├── 14-folder-contracts.md
+└── 15-workflow-domain.md
 ```
 
----
-
-### `societiza-product-plan`
-
-**O que faz:** Planejamento de produto com mentalidade Steve Jobs. Decide se
-uma feature deve existir, define o que ela deve ser, e gera uma especificação
-de produto salva em `docs/features/product/`.
-
-**Quando usar:** Antes de escrever qualquer código. Quando você tem uma ideia
-mas precisa validar se faz sentido para o produto, para quem serve, e o que
-exatamente deve ser construído.
-
-**Fluxo:**
-
-1. Lê `docs/business-context.md` e `docs/feature-map.md`
-2. Analisa o problema real, o fit com o produto, e o escopo mínimo
-3. Gera um documento de especificação de produto em `docs/features/product/`
-
-**Exemplo:**
-
-```
-/societiza-product-plan portal do cliente
-/societiza-product-plan notificações em tempo real
-```
-
-**Saída:** Arquivo `.md` em `docs/features/product/[nome-da-feature].md`
-
----
-
-### `deploy-to-vercel`
-
-**O que faz:** Faz deploy da aplicação no Vercel. Detecta o estado do projeto
-(vinculado ao Vercel ou não, autenticado ou não) e escolhe o método correto.
-Sempre faz preview por padrão, não produção.
-
-**Quando usar:** Quando você quer publicar a aplicação ou gerar um link de
-preview.
-
-**Métodos em ordem de preferência:**
-
-1. Git push (se o projeto já está vinculado ao Vercel com remote)
-2. `vercel deploy` via CLI (se vinculado mas sem remote)
-3. Link + deploy (se não vinculado mas CLI autenticada)
-4. Script sem autenticação (fallback para ambientes sem CLI)
-
-**Exemplo:**
-
-```
-/deploy-to-vercel
-"faz deploy e me manda o link"
-```
-
----
-
-### `frontend-design`
-
-**O que faz:** Cria interfaces frontend com alta qualidade de design — evitando
-a estética genérica de IA. Gera código de produção com tipografia, cores,
-espaçamento e motion intencionais.
-
-**Quando usar:** Quando você precisa construir um componente, página ou tela
-com qualidade visual além do padrão.
-
-**Referências que esta skill usa:**
-
-```
-.agents/skills/frontend-design/reference/typography.md
-.agents/skills/frontend-design/reference/color-and-contrast.md
-.agents/skills/frontend-design/reference/spatial-design.md
-.agents/skills/frontend-design/reference/motion-design.md
-.agents/skills/frontend-design/reference/interaction-design.md
-.agents/skills/frontend-design/reference/responsive-design.md
-.agents/skills/frontend-design/reference/ux-writing.md
-```
-
-**Exemplo:**
-
-```
-/frontend-design
-"cria uma landing page para o produto"
-"cria um componente de card de cliente com design profissional"
-```
-
----
-
-### `shadcn`
-
-**O que faz:** Gerencia componentes shadcn/ui — instalação, configuração,
-composição correta, regras de estilo e atualização. Ativa automaticamente
-quando o projeto tem `components.json`.
-
-**Ativação:** Automática. Não precisa invocar manualmente.
-
-**Quando é útil:** Quando você quer adicionar um componente novo, corrigir
-composição errada, ou entender como usar uma variante específica.
-
----
-
-### `social-content`
-
-**O que faz:** Criação de conteúdo para redes sociais — LinkedIn, Twitter/X,
-Instagram, TikTok. Define pilares de conteúdo, gera posts, threads, carrosséis
-e calendário editorial.
-
-**Quando usar:** Quando você precisa criar conteúdo para divulgar o Societiza
-ou conteúdo de marca pessoal.
-
-**Exemplo:**
-
-```
-/social-content
-"cria um post para o LinkedIn sobre o lançamento da feature de kanban"
-```
-
----
-
-## Estrutura de uma skill
-
-Toda skill vive em `.agents/skills/[nome-da-skill]/`:
-
-```
-.agents/skills/
-└── nome-da-skill/
-    ├── SKILL.md           ← protocolo da skill (obrigatório)
-    ├── references/        ← arquivos de contexto que a skill lê
-    │   └── *.md
-    ├── resources/         ← scripts e assets que a skill usa
-    │   └── *.sh
-    └── evals/             ← testes de avaliação da skill (opcional)
-        └── evals.json
-```
-
-### `SKILL.md`
-
-O arquivo principal. Contém:
-
-- **Frontmatter** — metadados: `name`, `description`, `user-invocable`,
-  `argument-hint`
-- **Protocolo** — o passo a passo que o Claude segue ao executar a skill
-- **Referências** — quais arquivos carregar e quando
-- **Regras de boundary** — o que a skill pode e não pode fazer
-
----
-
-## Tipos de skill
-
-### `user-invocable: true`
-
-A skill pode ser invocada explicitamente via `/nome-da-skill`. O Claude também
-pode ativá-la automaticamente quando detecta que o contexto corresponde.
-
-Exemplos: `societiza-feature-plan`, `societiza-product-plan`, `social-content`
-
-### `user-invocable: false` (ou ausente)
-
-A skill ativa automaticamente quando o contexto corresponde ao gatilho. Não
-precisa ser invocada pelo usuário.
-
-Exemplos: `shadcn` (ativa quando há `components.json` no projeto)
-
----
-
-## Como adicionar uma nova skill
-
-1. Crie a pasta: `.agents/skills/[nome-da-skill]/`
-2. Crie o `SKILL.md` com:
-   - Frontmatter com `name` e `description`
-   - O protocolo passo a passo
-   - Indicação dos arquivos de referência
-3. Adicione arquivos de referência em `references/` se necessário
-4. Teste invocando com `/nome-da-skill`
-
-### Template mínimo de `SKILL.md`
-
-```markdown
----
-name: nome-da-skill
-description: O que esta skill faz e quando deve ser usada.
-user-invocable: true
-argument-hint: "[argumento opcional]"
----
-
-# Nome da Skill
-
-Descrição do que a skill faz.
-
-## Passo 1 — ...
-
-## Passo 2 — ...
-```
-
----
-
-## Relação entre as skills do Societiza
-
-```
-societiza-product-plan
-    ↓ gera docs/features/product/[feature].md
-societiza-feature-plan
-    ↓ lê docs/features/product/ + frontend-code-rules/
-    ↓ gera plano de implementação
-[você implementa]
-deploy-to-vercel
-    ↓ publica
-```
-
-A `societiza-feature-plan` bloqueia a execução se a feature não tiver
-especificação de produto. Se não existir, ela redireciona para
-`societiza-product-plan` antes de continuar.
-
----
-
-## Regras de negócio das skills do Societiza
-
-As skills do Societiza leem as regras de código de:
-
-```
-.agents/skills/societiza-feature-plan/references/frontend-code-rules/
-```
-
-São 15 arquivos cobrindo arquitetura, criação de feature, TypeScript, queries,
-mutations, forms, components, nomenclatura, testes, imports/barrels,
-build/qualidade, git, documentação, contratos de pasta e domínio workflow.
-
-Manter esses arquivos atualizados é crítico — eles são a memória técnica do
-projeto e definem como todo código novo deve ser escrito.
+Esses arquivos são a memória técnica do projeto. Quando o Claude comete um
+erro de padrão e você corrige, a regra correspondente deve ser atualizada
+para que o erro não se repita.
