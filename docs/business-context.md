@@ -1,5 +1,7 @@
 # Societiza — Contexto de Negócio
 
+> **Última atualização:** 2026-04-06 por Gabriel Carvalho e Claude
+
 ## Como usar este documento
 
 Este documento serve como base de contexto de produto para qualquer pessoa ou
@@ -179,7 +181,13 @@ cliente.
 
 ## 6. Gaps estruturais
 
-### Migração de dados para dentro do sistema
+Cada gap está classificado por severidade:
+
+- **Bloqueante MVP** — precisa ser resolvido antes do lançamento
+- **Risco** — não bloqueia o MVP, mas pode causar problemas sérios se ignorado
+- **Dívida aceitável** — reconhecido, mas tolerável no curto prazo
+
+### Migração de dados para dentro do sistema `Dívida aceitável`
 
 Este é um dos maiores desafios de produto. Os dados atuais dos usuários estão
 espalhados em planilhas, WhatsApp, e-mails, cadernos operacionais, ERPs e sites
@@ -190,7 +198,7 @@ nenhuma funcionalidade de importação disponível. Isso é um bloqueio real par
 contabilidades que querem adotar o produto mas têm processos em andamento em
 outros sistemas.
 
-### Variação de regra de negócio por cidade, estado e prefeitura
+### Variação de regra de negócio por cidade, estado e prefeitura `Dívida aceitável`
 
 O Brasil não tem um fluxo único de abertura de empresa. Cada estado, cidade e,
 em muitos casos, cada prefeitura relevante pode impor regras, sequências,
@@ -201,7 +209,7 @@ acomodar essas diferenças, sem assumir que existe um processo nacional
 totalmente uniforme. Hoje o sistema de templates é flexível, mas não tem
 suporte explícito a localidade ou perfil regional.
 
-### Dependência de sistemas externos instáveis
+### Dependência de sistemas externos instáveis `Dívida aceitável`
 
 Boa parte da operação societária depende de sites públicos e sistemas externos
 que podem ser lentos, confusos, instáveis, ter captcha, mudar layout sem aviso
@@ -210,7 +218,7 @@ considerado nas decisões de produto, engenharia e operação. Qualquer feature
 de automação precisa ser projetada assumindo que o sistema externo pode falhar,
 e o usuário precisa de visibilidade sobre o status dessas automações.
 
-### Gap entre narrativa de produto e contratos técnicos atuais
+### Endpoints desprotegidos e contratos técnicos desalinhados `Bloqueante MVP`
 
 Algumas histórias do produto já estão claras, mas o backend atual ainda não
 implementa ou não expõe exatamente esses contratos da forma esperada. O caso
@@ -219,7 +227,24 @@ estratégico e planejamento técnico precisam sempre explicitar o que já existe
 de verdade, o que é comportamento esperado de produto, e o que ainda precisa
 ser alinhado entre frontend, backend e infra.
 
-### Permissões ainda pouco granulares
+### Fluxo de entrada do usuário (freemium vs. convite) `Bloqueante MVP`
+
+O plano freemium planejado para o MVP muda fundamentalmente o fluxo de entrada
+na plataforma. Hoje o acesso é inteiramente por convite, mas o modelo
+self-service exige um fluxo de registro direto, onboarding, limites de plano e
+lógica de upgrade. Sem essa definição fechada, não é possível lançar o MVP com
+entrada aberta. O impacto atinge autenticação, permissões e a experiência
+inicial do usuário.
+
+### Versionamento de templates `Risco`
+
+Hoje não existe mecanismo de versionamento de workflow templates. Se um
+template é alterado enquanto processos estão em andamento, não há garantia de
+que os processos existentes mantenham consistência com a versão do template em
+que foram criados. Isso pode causar problemas silenciosos de integridade
+conforme o uso escalar.
+
+### Permissões ainda pouco granulares `Dívida aceitável`
 
 Hoje o modelo de permissão cobre três perfis distintos, mas dentro do contexto
 da contabilidade ainda não existe granularidade suficiente. Isso pode virar
@@ -227,7 +252,7 @@ gargalo conforme o produto evoluir para operações com mais pessoas e mais
 sensibilidade de ação — por exemplo, quando um contador júnior não deve ter
 poder de alterar templates ou arquivar processos.
 
-### Colaboração com o cliente
+### Colaboração com o cliente `Dívida aceitável`
 
 Hoje o cliente (empresário) não tem acesso ao sistema. Toda comunicação é fora
 da plataforma — por WhatsApp, e-mail ou telefone. O contador precisa sair do
@@ -235,7 +260,7 @@ sistema para falar com o cliente, pedir documentos ou atualizar sobre o
 andamento. Isso é um gap de produto importante que só será resolvido com o
 portal do cliente.
 
-### Dashboard sem definição final de métricas
+### Dashboard sem definição final de métricas `Bloqueante MVP`
 
 Sabemos que o dashboard é obrigatório e estratégico, mas ainda não existe
 definição fechada de métrica, fonte de verdade, visualização final ou
