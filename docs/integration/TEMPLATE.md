@@ -7,8 +7,8 @@ Ao criar a documentação de uma feature específica, copiar este template e sal
 como `docs/integration/[nome-da-feature].md`.
 
 > Para contexto completo de produto antes de documentar, ler primeiro:
-> - `docs/business-context.md` — regras de negócio e contexto do produto
-> - `docs/feature-map.md` — dependências e integrações entre features
+> - `../business-context.md` — regras de negócio e contexto do produto
+> - `../planning/feature-map.md` — dependências e integrações entre features
 
 ---
 
