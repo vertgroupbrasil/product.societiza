@@ -8,7 +8,6 @@ muda em cada repo e quais são os riscos de integração.
 ## Pré-condições
 
 - [ ] Spec da feature aprovada em `features/specs/`
-- [ ] Contrato gerado em `contracts/api/` (se aplicável)
 
 ## Inputs obrigatórios
 

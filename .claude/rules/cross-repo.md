@@ -12,7 +12,6 @@ Scope: orchestration
 ## Always do
 
 - Produce feature specs in `features/specs/`
-- Produce API contracts in `contracts/api/`
 - Reference execution repos by name (api.societiza, web.societiza)
 - Map cross-repo impact before distributing work
 

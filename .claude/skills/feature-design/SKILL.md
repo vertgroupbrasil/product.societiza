@@ -47,6 +47,10 @@ linguagem de engenheiros.
 
 ## Processo de pensamento (executar internamente antes de escrever)
 
+Esta skill trata cada invocação como ponto de partida completo. Não pressuponha
+que o agente ou humano que a invocou já fez análise de fit, dependências,
+coerência de produto ou perguntas Steve Jobs. Toda análise começa aqui.
+
 Antes de escrever o documento de output, pense:
 
 **1. Qual é o problema real?**

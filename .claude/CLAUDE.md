@@ -1,87 +1,90 @@
-# Societiza Skills — Orchestration Hub
+# Societiza Skills — Hub de Orquestração
 
-Knowledge and orchestration repository for the Societiza ecosystem.
-This repo does not contain application code. It produces feature specs,
-contracts, and impact maps that the execution repos consume.
-
----
-
-## Role in the ecosystem
-
-```
-skills/              <- this repo (orchestrator)
-  receives feature intent, produces specs, generates contracts
-
-api.societiza/       <- backend execution
-  reads specs and contracts, implements .NET backend
-
-web.societiza/       <- frontend execution
-  reads contracts, implements Next.js frontend
-```
-
-Human interaction happens here — spec approval before any implementation
-starts in execution repos.
+Repositório de conhecimento e orquestração do ecossistema Societiza.
+Este repo não contém código de aplicação. Ele produz specs de features,
+specs e mapas de impacto que os repos de execução consomem.
 
 ---
 
-## Repository structure
+## Papel no ecossistema
+
+```
+skills/              <- este repo (orquestrador)
+  recebe intenção de feature, produz specs, mapeia impacto
+
+api.societiza/       <- execução backend
+  lê specs e mapas de impacto, implementa backend .NET
+
+web.societiza/       <- execução frontend
+  lê specs e mapas de impacto, implementa frontend Next.js
+```
+
+A interação humana acontece aqui — aprovação da spec antes de qualquer
+implementação começar nos repos de execução.
+
+---
+
+## Estrutura do repositório
 
 ```
 .claude/
-  CLAUDE.md            <- this file
-  settings.json        <- permissions
-  rules/               <- constraints applied every session
-  skills/              <- specialized knowledge loaded on demand
-  commands/            <- reusable workflows
-  agents/              <- reserved for future sub-agents
+  CLAUDE.md            <- este arquivo
+  settings.json        <- permissões
+  rules/               <- restrições aplicadas a cada sessão
+  skills/              <- conhecimento especializado carregado sob demanda
+  commands/            <- workflows reutilizáveis
+  agents/product-thinking.md  <- agente cérebro de produto
 
 docs/
-  product/             <- vision, values, priorities
-  context/             <- societario, accountancy, auth
-  planning/            <- dashboard, future features, feature map
-  integration/         <- backend-to-frontend integration template
-
-contracts/
-  api/                 <- versioned OpenAPI contracts (consumed by both repos)
+  product/             <- visão, valores, prioridades
+  context/             <- societário, escritório, auth
+  planning/            <- dashboard, features futuras, mapa de features
+  integration/         <- template de integração backend-to-frontend
 
 features/
-  specs/               <- approved feature specifications
+  specs/               <- especificações de features aprovadas
 
-  business-context.md  <- product context index
+  business-context.md  <- índice de contexto do produto
 ```
 
 ---
 
-## Existing documentation modules
+## Módulos de documentação existentes
 
-| Path | Content |
-|------|---------|
-| `docs/product/product-vision.md` | Identity, ICP, values, feature guidelines |
-| `docs/product/product-priorities.md` | P1-P5 priority semantics |
-| `docs/context/societario-context.md` | Workflow, template, board, fields |
-| `docs/context/accountancy-context.md` | Multi-tenant discriminant |
-| `docs/context/authentication-context.md` | Auth state and gaps |
-| `docs/planning/dashboard.md` | Next mandatory feature |
-| `docs/planning/future-features.md` | All planned future features |
-| `docs/planning/feature-map.md` | Feature dependencies and coupling |
-
----
-
-## Where to find what
-
-| Task | Read first |
-|------|-----------|
-| Plan a new feature | `.claude/skills/feature-design/SKILL.md` |
-| Understand product context | `docs/business-context.md` (index) |
-| Check feature dependencies | `docs/planning/feature-map.md` |
-| Map cross-repo impact | `.claude/commands/impact-map.md` |
-| Full new-feature workflow | `.claude/commands/new-feature.md` |
-
-Rules active every session: `.claude/rules/`
+| Caminho | Conteúdo |
+|---------|----------|
+| `docs/product/product-vision.md` | Identidade, ICP, valores, diretrizes de features |
+| `docs/product/product-priorities.md` | Semântica de prioridades P1-P5 |
+| `docs/context/societario-context.md` | Workflow, template, board, campos |
+| `docs/context/escritorio-context.md` | Escritório como unidade organizacional multi-tenant. Substitui accountancy. |
+| `docs/context/accountancy-context.md` | DEPRECIADO — ver escritorio-context.md |
+| `features/specs/escritorio-e-planos.md` | Spec aprovada do Escritório e Planos (P0 ativo) |
+| `docs/context/authentication-context.md` | Estado e lacunas de autenticação |
+| `docs/planning/dashboard.md` | Próxima feature obrigatória |
+| `docs/planning/future-features.md` | Todas as features futuras planejadas |
+| `docs/planning/feature-map.md` | Dependências e acoplamento entre features |
 
 ---
 
-## Migration notes
+## Onde encontrar o quê
 
-`societiza-feature-plan/` at repo root is pending migration to execution repos.
-See `societiza-feature-plan/MIGRATING.md` for details.
+| Tarefa | Leia primeiro |
+|--------|---------------|
+| Iniciar qualquer sessão de produto | `.claude/agents/product-thinking.md` (agente product-thinking) |
+| Planejar uma nova feature | `.claude/skills/feature-design/SKILL.md` |
+| Entender contexto do produto | `docs/business-context.md` (índice) |
+| Verificar dependências entre features | `docs/planning/feature-map.md` |
+| Mapear impacto cross-repo | `.claude/commands/impact-map.md` |
+| Workflow completo de feature para engenharia | `.claude/commands/to-engineering.md` |
+
+Regras ativas a cada sessão: `.claude/rules/`
+
+---
+
+## Notas de migração
+
+`societiza-feature-plan/` na raiz do repo está pendente de migração para os
+repos de execução. Veja `societiza-feature-plan/MIGRATING.md` para detalhes.
+
+`societiza-product-plan/` foi removido — seu conteúdo agora vive em
+`.claude/skills/feature-design/`.
