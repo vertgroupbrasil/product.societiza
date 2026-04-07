@@ -1,143 +1,146 @@
 ---
 name: feature-design
 description: >
-  Product planning skill for Societiza. Use when deciding whether to build a
-  feature, defining what it should be, understanding how it connects to the
-  product, or generating a product spec. Product-first — no code, no
-  architecture, no stack.
+  Skill de planejamento de produto para a Societiza. Use para decidir se uma
+  feature deve ser construída, definir o que ela deve ser, entender como se
+  conecta ao produto, ou gerar uma spec de produto. Produto primeiro — sem
+  código, sem arquitetura, sem stack.
 user-invocable: true
-argument-hint: "[feature name or problem description]"
+argument-hint: "[nome da feature ou descrição do problema]"
 ---
 
 # Feature Design
 
-This skill thinks about features the way Steve Jobs thought about products.
+Essa skill pensa em features da mesma forma que Steve Jobs pensava em produtos.
 
-Product first. Engineering figures out the rest.
+Produto primeiro. Engenharia resolve o resto.
 
-Before a single line of code is written, before any architecture decision is
-made, before any sprint is planned — this skill answers the question that
-matters most: **should this exist, and if so, what exactly should it be?**
-
----
-
-## Required reading before thinking
-
-Load these documents before responding. Read them in full.
-
-1. `references/steve-jobs-mentality.md` — the product thinking framework
-2. `docs/business-context.md` — product context index
-3. `docs/planning/feature-map.md` — how features connect and what each one enables
-
-Do not proceed without reading all three.
+Antes de uma única linha de código ser escrita, antes de qualquer decisão de
+arquitetura, antes de qualquer sprint ser planejado — essa skill responde à
+pergunta que mais importa: **isso deve existir e, se sim, o que exatamente
+deve ser?**
 
 ---
 
-## What this skill does
+## Leitura obrigatória antes de pensar
 
-This skill produces a product specification document for a feature. It does not
-produce technical plans, implementation guides, or architecture decisions.
+Carregue estes documentos antes de responder. Leia-os por completo.
 
-Everything in the output is written in the language of the user and the product,
-not in the language of engineers.
+1. `docs/business-context.md` — índice de contexto do produto
+2. `docs/planning/feature-map.md` — como features se conectam e o que cada uma habilita
+3. `references/steve-jobs-mentality.md` — o framework de pensamento de produto
 
----
-
-## Thinking process (run internally before writing)
-
-Before writing the output document, think through:
-
-**1. What is the real problem?**
-Not what the feature does. What problem it solves. Who has that problem. How
-often they face it. What they do today to work around it. Whether this is a
-problem worth solving now or later.
-
-**2. Does this fit the product?**
-Using `docs/business-context.md` and `docs/planning/feature-map.md`: where does this
-feature sit in the product? Which horizon does it belong to? Does it strengthen
-the core, or does it add noise? What features does it depend on? What features
-does it enable?
-
-**3. What is the Steve Jobs question?**
-From `references/steve-jobs-mentality.md`: run the 10 mandatory questions.
-If you cannot answer at least 8 clearly, say so in the output document and mark
-the feature as needing more definition before it can be approved.
-
-**4. What is the minimal version that matters?**
-What is the smallest version of this feature that genuinely solves the problem?
-What is the version that would make a user say "finally"? Not what is the
-complete vision — what is the smallest version with real impact.
-
-**5. Are there costs beyond code?**
-Does this feature require external services, third-party APIs, storage, email
-providers, WhatsApp integrations, government APIs, or anything else that creates
-a recurring cost or a new dependency? If so, what are the implications for
-pricing, plans, and build-or-buy decisions?
+Não prossiga sem ler os três.
 
 ---
 
-## Output format
+## O que essa skill faz
 
-Generate a markdown document and save it at:
+Essa skill produz um documento de especificação de produto para uma feature.
+Ela não produz planos técnicos, guias de implementação ou decisões de
+arquitetura.
+
+Tudo no output é escrito na linguagem do usuário e do produto, não na
+linguagem de engenheiros.
+
+---
+
+## Processo de pensamento (executar internamente antes de escrever)
+
+Antes de escrever o documento de output, pense:
+
+**1. Qual é o problema real?**
+Não o que a feature faz. Que problema ela resolve. Quem tem esse problema. Com
+que frequência enfrentam. O que fazem hoje para contornar. Se esse é um
+problema que vale resolver agora ou depois.
+
+**2. Isso se encaixa no produto?**
+Usando `docs/business-context.md` e `docs/planning/feature-map.md`: onde essa
+feature se posiciona no produto? A qual horizonte pertence? Ela fortalece o
+core ou adiciona ruído? De quais features ela depende? Quais features ela
+habilita?
+
+**3. Qual é a pergunta Steve Jobs?**
+De `references/steve-jobs-mentality.md`: execute as 10 perguntas obrigatórias.
+Se não conseguir responder pelo menos 8 com clareza, diga isso no documento
+de output e marque a feature como precisando de mais definição antes de ser
+aprovada.
+
+**4. Qual é a versão mínima que importa?**
+Qual é a menor versão dessa feature que genuinamente resolve o problema?
+Qual é a versão que faria um usuário dizer "finalmente"? Não a visão completa
+— qual é a menor versão com impacto real.
+
+**5. Existem custos além de código?**
+Essa feature exige serviços externos, APIs de terceiros, armazenamento,
+provedores de email, integrações com WhatsApp, APIs governamentais, ou
+qualquer coisa que crie um custo recorrente ou uma nova dependência? Se sim,
+quais são as implicações para precificação, planos e decisões de build-or-buy?
+
+---
+
+## Formato do output
+
+Gere um documento markdown e salve em:
 
 ```
-features/specs/[feature-name].md
+features/specs/[nome-da-feature].md
 ```
 
-Use the feature name as the file name, in kebab-case, without dates.
+Use o nome da feature como nome do arquivo, em kebab-case, sem datas.
 
-The document must contain the following sections:
+O documento deve conter as seguintes seções:
 
-### Sections of the output document
+### Seções do documento de output
 
 #### 1. Visão da feature
-One to three paragraphs in user language. What it is. How the user perceives
-it. What it enables them to do. No technical language.
+Um a três parágrafos na linguagem do usuário. O que é. Como o usuário
+percebe. O que permite que ele faça. Sem linguagem técnica.
 
 #### 2. Problema que resolve
-Specific, real problem in the user's context. Not vague. Not generic.
+Problema específico e real no contexto do usuário. Não vago. Não genérico.
 
 #### 3. Para quem é
-Who benefits. In what situation. What profile.
+Quem se beneficia. Em qual situação. Qual perfil.
 
 #### 4. Como melhora a experiência atual
-Before and after. How the daily workflow changes.
+Antes e depois. Como o fluxo de trabalho diário muda.
 
 #### 5. Como se conecta com o produto existente
-Dependencies. What it enables. Building order.
+Dependências. O que habilita. Ordem de construção.
 
 #### 6. O que não é (escopo negativo)
-What is explicitly out of scope. Prevents drift.
+O que está explicitamente fora do escopo. Previne desvios.
 
 #### 7. Custos adicionais
-External services, APIs, storage. Or: "Nenhum custo externo identificado."
+Serviços externos, APIs, armazenamento. Ou: "Nenhum custo externo identificado."
 
 #### 8. Perguntas abertas
-Unresolved decisions. Missing information. Honest about unknowns.
+Decisões não resolvidas. Informações faltantes. Honesto sobre incertezas.
 
 ---
 
-## Absolute prohibitions
+## Proibições absolutas
 
-This skill must never include in its output:
+Essa skill nunca deve incluir no seu output:
 
-- Code snippets
-- Database schemas
-- API contracts or endpoint structures
-- Architecture decisions
-- Technology stack references
-- Component names or file paths
-- Implementation timelines
-- Sprint assignments
+- Trechos de código
+- Schemas de banco de dados
+- Contratos de API ou estruturas de endpoints
+- Decisões de arquitetura
+- Referências a stack tecnológico
+- Nomes de componentes ou caminhos de arquivo
+- Cronogramas de implementação
+- Atribuições de sprint
 
 ---
 
-## Final check before saving
+## Checagem final antes de salvar
 
-1. Can a non-technical person read this and fully understand the feature?
-2. Does every section speak the language of the user, not the engineer?
-3. Is the problem specific enough to validate with a real user?
-4. Is the scope negative clear enough to prevent drift?
-5. If there are costs, are they in business terms?
+1. Uma pessoa não-técnica consegue ler isso e entender completamente a feature?
+2. Todas as seções falam a linguagem do usuário, não do engenheiro?
+3. O problema é específico o suficiente para validar com um usuário real?
+4. O escopo negativo é claro o suficiente para prevenir desvios?
+5. Se há custos, eles estão em termos de negócio?
 
-If any answer is no, revise before saving.
+Se qualquer resposta for não, revise antes de salvar.
