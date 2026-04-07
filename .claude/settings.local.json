@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(ls -d /c/Users/gabri/vertgroupbrasil/societiza/web.societiza/.agents/skills/*/)",
-      "Bash(xargs -I {} basename {})",
-      "Read(//tmp/**)"
-    ]
-  }
-}
