@@ -1,0 +1,277 @@
+openapi: 3.0.3
+
+info:
+  title: Rastreamento do Processo Societário
+  version: "1.0"
+  description: >
+    Contrato público de rastreamento de processo societário.
+    Expõe o status de um processo para o cliente da contabilidade via link
+    de acesso público, sem autenticação. Também cobre o endpoint interno
+    usado pelo contador para obter o link de rastreamento do processo.
+
+servers:
+  - url: https://api.societiza.com.br
+
+tags:
+  - name: rastreamento
+    description: Acesso público ao status do processo (cliente da contabilidade)
+  - name: processo
+    description: Acesso interno ao link de rastreamento (contador autenticado)
+
+# ---------------------------------------------------------------------------
+# PATHS
+# ---------------------------------------------------------------------------
+
+paths:
+
+  # --------------------------------------------------------------------------
+  # PÚBLICO — usado pelo cliente da contabilidade via link
+  # --------------------------------------------------------------------------
+
+  /track/{trackingToken}:
+    get:
+      tags: [rastreamento]
+      operationId: getProcessTracking
+      summary: Retorna o estado público de rastreamento de um processo
+      description: >
+        Endpoint público, sem autenticação. Retorna as etapas do template
+        vinculado ao processo e qual etapa está atualmente ativa.
+        Não expõe tarefas internas, campos, dados de outros processos
+        ou qualquer informação da contabilidade além do necessário para
+        contextualizar o processo.
+        Retorna 404 se o token não existir.
+        Retorna 410 se o processo foi concluído há mais de 30 dias (link expirado).
+      parameters:
+        - name: trackingToken
+          in: path
+          required: true
+          description: Token único e opaco de rastreamento gerado na criação do processo
+          schema:
+            type: string
+            example: "tk_a1b2c3d4e5f6"
+      responses:
+        "200":
+          description: Estado atual do processo retornado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessTrackingResponse"
+        "404":
+          description: Token não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+              example:
+                error:
+                  code: "TRACKING_NOT_FOUND"
+                  message: "Link de rastreamento não encontrado."
+        "410":
+          description: Link expirado — processo concluído há mais de 30 dias
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+              example:
+                error:
+                  code: "TRACKING_EXPIRED"
+                  message: "Este link de rastreamento não está mais disponível."
+
+  # --------------------------------------------------------------------------
+  # INTERNO — usado pelo contador autenticado para obter o link do processo
+  # --------------------------------------------------------------------------
+
+  /processes/{processId}/tracking-link:
+    get:
+      tags: [processo]
+      operationId: getProcessTrackingLink
+      summary: Retorna o link de rastreamento público de um processo
+      description: >
+        Endpoint autenticado. Disponível na sheet de operação do processo.
+        Retorna a URL pública de rastreamento que o contador pode copiar e
+        compartilhar com o cliente.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: processId
+          in: path
+          required: true
+          description: ID do processo societário
+          schema:
+            type: string
+            format: uuid
+            example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+      responses:
+        "200":
+          description: Link de rastreamento retornado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrackingLinkResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: Processo não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+              example:
+                error:
+                  code: "PROCESS_NOT_FOUND"
+                  message: "Processo não encontrado."
+
+# ---------------------------------------------------------------------------
+# COMPONENTS
+# ---------------------------------------------------------------------------
+
+components:
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  # --------------------------------------------------------------------------
+  # SCHEMAS
+  # --------------------------------------------------------------------------
+
+  schemas:
+
+    ProcessTrackingResponse:
+      type: object
+      required: [processName, status, steps]
+      properties:
+        processName:
+          type: string
+          description: Nome da empresa ou processo em abertura
+          example: "Padaria do João LTDA"
+        status:
+          type: string
+          enum: [in_progress, completed]
+          description: >
+            Estado geral do processo.
+            - in_progress: processo em andamento
+            - completed: processo concluído
+          example: "in_progress"
+        steps:
+          type: array
+          description: >
+            Sequência ordenada das etapas do template vinculado ao processo.
+            A ordem do array é a ordem operacional real. Não reordenar no frontend.
+          items:
+            $ref: "#/components/schemas/TrackingStep"
+
+    TrackingStep:
+      type: object
+      required: [order, name, state]
+      properties:
+        order:
+          type: integer
+          description: Posição da etapa na sequência do template (começa em 1)
+          example: 3
+        name:
+          type: string
+          description: Nome da etapa como configurado no template pelo contador
+          example: "Registro na Junta Comercial"
+        state:
+          type: string
+          enum: [completed, active, pending]
+          description: >
+            Estado da etapa na visão do cliente:
+            - completed: etapa já concluída
+            - active: etapa em que o processo está agora
+            - pending: etapa que ainda não foi iniciada
+          example: "active"
+
+    TrackingLinkResponse:
+      type: object
+      required: [trackingUrl]
+      properties:
+        trackingUrl:
+          type: string
+          format: uri
+          description: URL pública de rastreamento para compartilhar com o cliente
+          example: "https://societiza.com.br/rastreio/tk_a1b2c3d4e5f6"
+
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: Código de erro legível por máquina
+              example: "TRACKING_NOT_FOUND"
+            message:
+              type: string
+              description: Mensagem legível por humano
+              example: "Link de rastreamento não encontrado."
+
+  # --------------------------------------------------------------------------
+  # RESPONSES REUTILIZÁVEIS
+  # --------------------------------------------------------------------------
+
+  responses:
+    Unauthorized:
+      description: Token ausente ou inválido
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: "UNAUTHORIZED"
+              message: "Autenticação necessária."
+
+    Forbidden:
+      description: Usuário autenticado sem permissão para acessar este recurso
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: "FORBIDDEN"
+              message: "Você não tem permissão para acessar este processo."
+
+# ---------------------------------------------------------------------------
+# NOTAS DE IMPLEMENTAÇÃO PARA api.societiza
+# ---------------------------------------------------------------------------
+#
+# 1. GERAÇÃO DO TOKEN
+#    O trackingToken deve ser gerado automaticamente no momento da criação
+#    do processo. Token opaco, não derivado do processId. Sugestão: UUID v4
+#    ou string aleatória de 12+ caracteres com prefixo "tk_".
+#
+# 2. EXPIRAÇÃO
+#    O link permanece ativo enquanto o processo está em andamento.
+#    Expira 30 dias após a data de conclusão do processo.
+#    O backend deve calcular e retornar 410 quando esse prazo for ultrapassado.
+#
+# 3. ISOLAMENTO DE DADOS
+#    O endpoint público /track/{trackingToken} não pode expor:
+#    - Dados de outros processos ou clientes
+#    - Tarefas internas, campos ou dados operacionais
+#    - Informações da contabilidade além do necessário para contextualizar
+#
+# 4. NOTIFICAÇÃO POR E-MAIL
+#    Quando o processo avança de etapa, o sistema deve disparar notificação
+#    ao cliente. Fora do escopo desta versão (e-mail do cliente ainda não
+#    é coletado). Será endereçado quando o campo de e-mail do cliente for
+#    introduzido no processo.
+#
+# 5. IDENTIDADE DO E-MAIL (futuro)
+#    Quando implementado, o e-mail deve ser enviado com identidade visual
+#    da contabilidade: nome, logo e remetente dela. A Societiza não deve
+#    aparecer para o cliente.
+#
+# 6. AUTORIZAÇÃO DO ENDPOINT INTERNO
+#    GET /processes/{processId}/tracking-link deve validar que o processo
+#    pertence à contabilidade (accountancyId) do usuário autenticado.
