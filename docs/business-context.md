@@ -74,70 +74,60 @@ com sua própria equipe, seus próprios dados e seu próprio ambiente de trabalh
 O acesso é inteiramente controlado por convite, com perfis de permissão
 distintos definidos no momento do convite.
 
-O multi-tenancy é organizado por escritório de contabilidade: cada contabilidade
-tem sua própria instância de dados, processos, templates e membros de equipe.
-O aggregate `Accountancy` é o discriminante central dessa separação.
+O multi-tenancy é organizado por Accountancy: cada contabilidade tem sua própria
+instância de dados, processos, templates e membros de equipe. O aggregate
+`Accountancy` é o discriminante central dessa separação — identificado por
+`accountancyId` nos agregados `User`, `UserInvite` e `WorkflowTemplate`, e em
+suas projeções e eventos correspondentes.
 
 A plataforma opera com três perfis de usuário distintos, com escopos de acesso
 bem delimitados:
 
 - **SystemAdmin** é o perfil dos donos e operadores da própria Societiza. Tem
-  acesso global à plataforma: cadastra escritórios de contabilidade, gerencia
-  workflow templates (criação, edição e configuração), e convida usuários de
-  qualquer perfil para qualquer tenant. Não pertence a nenhum escritório
-  específico — opera acima do tenant.
+  acesso global à plataforma: gerencia workflow templates e acesso administrativo.
 
-- **AccountingAdmin** é o administrador de um escritório de contabilidade. Entra
-  na plataforma exclusivamente por convite do SystemAdmin. Gerencia os membros da
-  sua equipe (convidar, editar e remover) e tem acesso completo à operação de
-  processos societários.
+- **AccountingAdmin** é o administrador de uma contabilidade. Gerencia os membros
+  da sua equipe e tem acesso completo à operação de processos societários.
 
-- **AccountingEmployee** é o funcionário operacional da contabilidade. Entra por
-  convite do AccountingAdmin ou do SystemAdmin. Seu escopo é restrito à operação:
+- **AccountingEmployee** (Member) é o funcionário operacional da contabilidade.
+  Entra por convite do AccountingAdmin. Seu escopo é restrito à operação:
   cria processos, edita, acompanha o andamento e executa tarefas. Não gerencia
-  usuários nem workflow templates.
-
-O fluxo de acesso é inteiramente controlado por convite — não existe registro
-direto. Todo usuário entra via `UserInvite`, com o perfil definido no momento
-do convite.
-
-No roadmap, está prevista a introdução de novos perfis de usuário dentro do
-contexto da contabilidade, com escopos de acesso mais específicos. Quais perfis
-existirão e o que cada um poderá fazer ainda não está definido nem implementado.
-
-**Freemium (planejado para o MVP):** o time está desenhando um fluxo de entrada
-diferente do descrito acima, contemplando um plano gratuito com acesso
-self-service. Os detalhes ainda estão sendo definidos e serão documentados
-separadamente quando consolidados.
+  usuários da contabilidade.
 
 ---
 
 ## 4. Features existentes
 
-### Societário (workflow-template + workflow-process)
-
-O societário é o núcleo do produto. Um board kanban com colunas ordenadas que
-representam etapas de abertura de empresa. Cada card é um workflow process. O workflow
-template é a camada de configuração — etapas, tarefas (Manual, Automatic e Approval) e 
-campos (Text, Boolean, Integer, Select e Date) configuráveis.
-
-> Detalhes completos: [`context/societario-context.md`](context/societario-context.md)
-
 ### Accountancy
 
-Representa o escritório de contabilidade na plataforma. É o discriminante
-multi-tenant: convites, processos, templates e todas as demais funcionalidades 
-partem do contexto da contabilidade.
+A Accountancy é a unidade organizacional multi-tenant da Societiza. Cada
+contabilidade tem sua própria instância de dados, membros e templates. O
+discriminante é `accountancyId`.
 
 > Detalhes completos: [`context/accountancy-context.md`](context/accountancy-context.md)
 
-### Autenticação
+### Identity
 
-Login com e-mail e senha, logout, refresh de token e reset de senha implementados.
-Endpoints ainda sem proteção aplicada. Fluxo de acesso em reestruturação por
-conta do plano freemium planejado para o MVP.
+O módulo Identity cobre autenticação e convites.
 
-> Detalhes completos: [`context/authentication-context.md`](context/authentication-context.md)
+**Convites:** InviteUser, AcceptInvite, RevokeInvite, ResendInvite +
+ExpireInvitesJob (expira convites após 72h) + SendInviteEmail.
+
+**Autenticação:** Login, Logout, Refresh, ForgotPassword, ResetPassword +
+SendPasswordResetEmail. Endpoints ainda sem middleware de proteção aplicado.
+
+> Detalhes completos: [`context/identity-context.md`](context/identity-context.md)
+
+### WorkflowTemplate
+
+O WorkflowTemplate é a camada de configuração do societário — etapas (Steps),
+tarefas (Tasks) com tipos Manual, Automatic e Approval, e campos (Fields) com
+tipos Text, Boolean, Integer, Select e Date.
+
+O WorkflowProcess (instâncias de execução de processos, o board kanban) ainda
+não está implementado — é a próxima peça central do MVP.
+
+> Detalhes completos: [`context/societario-context.md`](context/societario-context.md)
 
 ---
 
@@ -149,8 +139,8 @@ entrada, e por fim expandir o produto para além da abertura de empresa.
 
 | Prioridade | Feature | Status |
 |---|---|---|
-| P1 | Fortalecer o societário | Em andamento |
-| P2 | Dashboard operacional | Não iniciado |
+| **P1** | **Fortalecer o societário** | **Prioridade ativa** |
+| P2 | Dashboard operacional | Pós-MVP |
 | P3 | Notificações e acompanhamento | Futuro |
 | P4 | Automação, importação e IA | Futuro |
 | P5 | Álvarás, certificados e vida regulatória | Futuro |
@@ -158,9 +148,9 @@ entrada, e por fim expandir o produto para além da abertura de empresa.
 **P1** cobre melhorias de qualidade, consistência e capacidade de configuração
 do societário e do workflow template — base para tudo que vem depois.
 
-**P2** é a próxima feature grande e mandatória: um dashboard de leitura
-operacional interativo, conectado ao societário. Cada insight deve permitir
-navegação direta para a área operacional correspondente.
+**P2** é um dashboard de leitura operacional interativo, conectado ao
+societário. É uma feature pós-MVP. Cada insight deve permitir navegação direta
+para a área operacional correspondente.
 
 **P3** amplia a capacidade de acompanhamento: notificações por e-mail para a
 equipe e para o cliente final, alertas de processos parados e gargalos
@@ -227,15 +217,6 @@ estratégico e planejamento técnico precisam sempre explicitar o que já existe
 de verdade, o que é comportamento esperado de produto, e o que ainda precisa
 ser alinhado entre frontend, backend e infra.
 
-### Fluxo de entrada do usuário (freemium vs. convite) `Bloqueante MVP`
-
-O plano freemium planejado para o MVP muda fundamentalmente o fluxo de entrada
-na plataforma. Hoje o acesso é inteiramente por convite, mas o modelo
-self-service exige um fluxo de registro direto, onboarding, limites de plano e
-lógica de upgrade. Sem essa definição fechada, não é possível lançar o MVP com
-entrada aberta. O impacto atinge autenticação, permissões e a experiência
-inicial do usuário.
-
 ### Versionamento de templates `Risco`
 
 Hoje não existe mecanismo de versionamento de workflow templates. Se um
@@ -260,13 +241,6 @@ sistema para falar com o cliente, pedir documentos ou atualizar sobre o
 andamento. Isso é um gap de produto importante que só será resolvido com o
 portal do cliente.
 
-### Dashboard sem definição final de métricas `Bloqueante MVP`
-
-Sabemos que o dashboard é obrigatório e estratégico, mas ainda não existe
-definição fechada de métrica, fonte de verdade, visualização final ou
-interatividade completa. O planejamento dessa feature precisa combinar visão de
-produto com a realidade operacional do societário.
-
 ---
 
 ## 7. Mapa de features e integrações
@@ -278,15 +252,6 @@ compartilhados e pontos de acoplamento críticos está em:
 
 ---
 
-## 8. Documentação de integração
-
-O template canônico para documentar features do backend para consumo do
-frontend está em:
-
-> [`integration/TEMPLATE.md`](integration/TEMPLATE.md)
-
----
-
 ## Documentos satélites
 
 | Documento | Conteúdo |
@@ -294,8 +259,8 @@ frontend está em:
 | [`product/product-vision.md`](product/product-vision.md) | Identidade, ICP, valores, como features devem se comportar |
 | [`product/product-priorities.md`](product/product-priorities.md) | Semântica de prioridade P1-P5 |
 | [`context/societario-context.md`](context/societario-context.md) | WorkflowTemplate, WorkflowProcess, board, campos |
-| [`context/accountancy-context.md`](context/accountancy-context.md) | Accountancy como tenant root |
-| [`context/authentication-context.md`](context/authentication-context.md) | Autenticação: estado atual e gaps |
+| [`context/accountancy-context.md`](context/accountancy-context.md) | Accountancy: unidade organizacional multi-tenant atual |
+| [`context/identity-context.md`](context/identity-context.md) | Identity: autenticação, convites e gestão de usuário |
 | [`planning/dashboard.md`](planning/dashboard.md) | Dashboard: visão, dados, dependências |
 | [`planning/future-features.md`](planning/future-features.md) | Todas as features futuras planejadas |
 | [`planning/feature-map.md`](planning/feature-map.md) | Status, dependências, dados compartilhados |

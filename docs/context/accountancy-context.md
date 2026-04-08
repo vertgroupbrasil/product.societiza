@@ -1,24 +1,55 @@
-# Accountancy
+# Accountancy — Unidade Organizacional
 
-A feature de accountancy representa a contabilidade dentro da plataforma. Ela
-é o contorno organizacional do produto. O escritório de contabilidade que
-compra e usa a Societiza. A accountancy guarda dados básicos do escritório
-(nome legal, nome fantasia, CNPJ, telefone, e-mail) e é o ponto de partida
-para a criação de times e para a separação de dados entre clientes diferentes.
+> Documento de contexto. Descreve a Accountancy como entidade multi-tenant atual da Societiza.
+> Atualizado em 08/04/2026.
 
-A importância da accountancy vai além de ser apenas um cadastro. Ela é o
-discriminante multi-tenant do sistema: convites, processos, templates e futuras
-funcionalidades de branding partem do contexto da contabilidade. Mesmo quando
-uma feature parecer focada em workflow, deve-se lembrar que a entidade da
-contabilidade é o contorno organizacional do produto.
+---
+
+## O que é uma Accountancy
+
+A Accountancy é a unidade organizacional que representa um escritório de
+contabilidade dentro da Societiza. É o contorno multi-tenant do sistema —
+todos os processos, templates e configurações de equipe pertencem a uma
+Accountancy específica, identificada por `accountancyId`.
+
+Cada Accountancy tem uma identidade que espelha o escritório de contabilidade
+no mundo físico:
+
+- CNPJ
+- Nome legal
+- Nome fantasia
+- Endereço
+- Cidade
+- Estado
+- CEP
+- Telefone
+- E-mail
+
+---
+
+## Quem cria e gerencia
+
+A Accountancy é criada e gerenciada pela própria Societiza via SystemAdmin.
+O contador acessa a plataforma dentro do contexto de uma Accountancy já
+configurada — ele não cria nem configura a Accountancy diretamente.
+
+---
+
+## Papel no sistema
+
+`accountancyId` é o discriminante central de toda separação de dados na
+plataforma. Está presente em todo processo, template, convite e filtro.
+Nenhum dado de uma Accountancy vaza para outra.
+
+O societário opera sempre dentro do contexto de uma Accountancy ativa: os
+processos visíveis no board, os templates disponíveis e os membros da equipe
+são todos scoped ao `accountancyId` da sessão.
+
+---
 
 ## Estado atual
 
-O que está implementado hoje: criação, edição, listagem de contabilidades,
-vinculação com processos no board via filtro.
-
-## Gaps conhecidos
-
-- Branding personalizado por contabilidade
-- Configurações avançadas por escritório
-- Multi-contabilidade gerenciada por um único admin
+A Accountancy é a estrutura vigente no sistema. Reestruturações futuras (como
+modelo de auto-criação pelo contador, planos de assinatura e suporte a múltiplas
+contabilidades por usuário) estão sendo planejadas na spec
+`features/specs/escritorio-e-planos.md`, ainda aguardando aprovação.

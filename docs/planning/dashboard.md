@@ -27,7 +27,7 @@ riscos, gargalos operacionais.
 ## Dependências técnicas
 
 Do ponto de vista técnico, o dashboard depende do workflow (fonte dos dados de
-processo) e da accountancy (filtro multi-tenant por escritório). Ele não deve
+processo) e da Accountancy (filtro multi-tenant por `accountancyId`). Ele não deve
 nascer como módulo analítico isolado. Deve resumir a operação real e levar o
 usuário de volta ao trabalho com contexto e filtros.
 

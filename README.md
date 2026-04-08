@@ -74,8 +74,8 @@ docs/
     product-priorities.md  <- semântica de prioridades P0–P5
   context/
     societario-context.md  <- workflow, template, board, campos
-    escritorio-context.md  <- escritório como unidade multi-tenant
-    authentication-context.md <- estado e lacunas de autenticação
+    accountancy-context.md <- accountancy como unidade multi-tenant
+    identity-context.md       <- estado e lacunas de autenticação
   planning/
     dashboard.md           <- próxima feature obrigatória
     future-features.md     <- todas as features futuras planejadas

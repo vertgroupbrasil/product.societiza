@@ -55,13 +55,7 @@ e médio porte e contadores autônomos. São operações que normalmente sofrem 
 controle manual, uso excessivo de planilhas, dependência de WhatsApp, dificuldade 
 para padronizar processos e baixa visibilidade sobre gargalos.
 
-A Societiza é um SaaS B2B. O modelo comercial ainda não está totalmente
-fechado, mas a direção atual é trabalhar com um plano principal por assinatura
-e um freemium. As limitações do freemium ainda não estão definidas, mas hoje a
-linha de pensamento está centrada principalmente em quantidade de processos
-rodados ou quantidade de processos ativos.
-
-O produto deve ser pensado como software de time. Ele não é apenas um painel
+A Societiza é um SaaS B2B. O produto deve ser pensado como software de time. Ele não é apenas um painel
 pessoal. Quem compra é um usuário principal, que representa a contabilidade, e
 depois convida outras pessoas para a equipe.
 

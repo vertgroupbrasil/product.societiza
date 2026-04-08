@@ -3,17 +3,10 @@
 ## O societário como núcleo do produto
 
 O societário é o núcleo do produto. Tudo na Societiza orbita em torno do fluxo
-de abertura de empresa. O societário é um quadro kanban sem drag-and-drop no
-uso operacional do workflow, com colunas ordenadas que representam as etapas
-pelas quais um processo passa desde o início até a conclusão.
-
-Cada processo representa uma abertura de empresa ou um caso semelhante dentro
-da contabilidade. O processo contém dados básicos da empresa sendo aberta,
-vinculação com um escritório de contabilidade (accountancy), e uma série de
-tarefas configuradas pelo template do workflow. Dentro do processo, existem
-tarefas e campos configuráveis que precisam ser suficientemente claros para que
-qualquer membro da equipe entenda em que ponto o processo está, o que falta, o 
-que está travado e o que precisa ser feito em seguida.
+de abertura de empresa. A visão do societário é um quadro kanban sem
+drag-and-drop no uso operacional do workflow, com colunas ordenadas que
+representam as etapas pelas quais um processo passa desde o início até a
+conclusão. Cada card no board representa uma abertura de empresa.
 
 Do ponto de vista de experiência do usuário, o societário deve transmitir
 controle, previsibilidade e continuidade. O contador não deve sentir que está
@@ -22,30 +15,36 @@ da contabilidade em um único lugar. O board precisa mostrar rapidamente o
 estado de cada processo, os responsáveis, as pendências e os gargalos.
 
 O societário se conecta diretamente com o workflow template (que define as
-etapas e tarefas), com a accountancy (que identifica a qual escritório o
-processo pertence), e será a fonte primária de dados para o dashboard e para
-futuras features de notificação.
+etapas e tarefas), com a Accountancy ativa (que identifica a qual contabilidade
+o processo pertence via `accountancyId`), e será a fonte primária de dados para
+o dashboard e para futuras features de notificação.
+
+**Estado atual:** O WorkflowTemplate está implementado e é a base da feature.
+O WorkflowProcess — a camada de execução que entrega o board kanban com cards
+por processo — ainda não está implementado, mas é parte central do MVP. A
+descrição do board acima descreve a experiência prevista para o MVP.
 
 ---
  
-## WorkflowTemplate e WorkflowProcess
+## WorkflowTemplate (implementado) e WorkflowProcess (não implementado)
  
 O societário é composto por duas camadas complementares: o **WorkflowTemplate**,
 que define a estrutura do fluxo, e o **WorkflowProcess**, que representa a
 execução real de um processo a partir dessa estrutura.
  
-### WorkflowProcess — o board operacional
+### WorkflowProcess — o board operacional (previsto para o MVP)
  
-O WorkflowProcess é a camada onde o usuário acompanha e opera processos. O
-board é um kanban com colunas que representam as etapas do workflow. Cada card
-é um processo de abertura de empresa — uma instância criada a partir de uma
-versão publicada de um WorkflowTemplate, contendo as instâncias das etapas e
-tarefas daquele template.
- 
-A experiência esperada é de visão operacional imediata: ao abrir o board, o
-contador vê exatamente onde cada processo está, o que está parado, o que
-precisa de atenção e o que está avançando. A ausência de drag-and-drop é uma
-decisão atual; a movimentação de etapa acontece de forma explícita.
+**O WorkflowProcess ainda não está implementado, mas é peça central do MVP.**
+É a camada onde o usuário acompanhará e operará processos. O board será um
+kanban com colunas que representam as etapas do workflow. Cada card será um
+processo de abertura de empresa — uma instância criada a partir de uma versão
+publicada de um WorkflowTemplate, contendo as instâncias das etapas e tarefas
+daquele template.
+
+A experiência prevista é de visão operacional imediata: ao abrir o board, o
+contador verá exatamente onde cada processo está, o que está parado, o que
+precisa de atenção e o que está avançando. A movimentação de etapa acontecerá
+de forma explícita (sem drag-and-drop).
  
 ### WorkflowTemplate — a estrutura do fluxo
  
@@ -104,6 +103,15 @@ representa um template descontinuado, mantido apenas para referência histórica
 A versão do template (ex: `v1.0`) representa a versão publicada e aprovada.
 Ela não muda automaticamente ao editar — uma mudança de versão é sempre uma
 decisão explícita.
+
+### Contexto de Accountancy no societário
+
+A Accountancy ativa é o contexto que delimita o que o usuário vê e cria no
+societário. Todos os processos e templates do board pertencem à Accountancy
+ativa via `accountancyId`. O discriminante para filtros e criação de recursos
+é sempre `accountancyId` — nunca uma cota global entre contabilidades distintas.
+
+---
 
 ### Campos dentro de tarefas e etapas — atenção ao contexto
 
