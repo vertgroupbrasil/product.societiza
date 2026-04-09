@@ -6,6 +6,8 @@ que uma feature nova, alterada ou expandida precisar ser integrada no frontend.
 Ao criar a documentação de uma feature específica, copiar este template e salvar
 como `docs/integration/[nome-da-feature].md`.
 
+> Template armazenado em `templates/integration.md`.
+
 > Para contexto completo de produto antes de documentar, ler primeiro:
 > - `../business-context.md` — regras de negócio e contexto do produto
 > - `../planning/feature-map.md` — dependências e integrações entre features

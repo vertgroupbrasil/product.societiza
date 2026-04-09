@@ -75,17 +75,22 @@ docs/
   context/
     societario-context.md  <- workflow, template, board, campos
     accountancy-context.md <- accountancy como unidade multi-tenant
-    identity-context.md       <- estado e lacunas de autenticação
+    identity-context.md    <- estado e lacunas de autenticação
   planning/
     dashboard.md           <- próxima feature obrigatória
     future-features.md     <- todas as features futuras planejadas
     feature-map.md         <- dependências e acoplamento entre features
-  integration/
-    TEMPLATE.md            <- modelo de documentação backend → frontend
   business-context.md      <- índice de contexto do produto (leitura obrigatória)
 
-features/
-  specs/                   <- specs de features aprovadas
+specs/
+  [domínio]-[conceito]/    <- ex: societario-rastreamento/
+    spec.md                <- spec de produto aprovada
+    impact-map.md          <- mapa de impacto cross-repo
+
+templates/
+  specification.md         <- modelo canônico de spec de produto
+  impact-map.md            <- modelo de mapa de impacto
+  integration.md           <- modelo de contrato backend → frontend
 ```
 
 ---
@@ -147,7 +152,7 @@ prioridade e decide qual caminho seguir.
 
 Descreva a ideia em linguagem natural. O agente invoca `feature-design`, que
 lê o contexto, aplica o framework de pensamento e gera uma spec em
-`features/specs/`. O humano aprova ou pede revisões. Nenhum repo de execução
+`specs/`. O humano aprova ou pede revisões. Nenhum repo de execução
 é acionado.
 
 **Caminho de execução** — quando a decisão de produto já foi tomada.
@@ -174,10 +179,3 @@ Toda sessão carrega as rules em `.claude/rules/` automaticamente:
 - **spec-first** — nenhuma feature é implementada sem spec aprovada
 - **cross-repo** — este repo produz specs e mapas de impacto, não código
 - **integration** — guardrails para evitar que a IA invente features ou mascare lacunas
-
----
-
-## Migração pendente
-
-`societiza-feature-plan/` na raiz está pendente de migração para os repos de
-execução. Ver `societiza-feature-plan/MIGRATING.md` para detalhes.

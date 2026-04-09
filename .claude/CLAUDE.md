@@ -19,12 +19,18 @@ Repos de execução: `api.societiza` (.NET 9) · `web.societiza` (Next.js)
 docs/
   business-context.md          <- índice de contexto (leitura obrigatória)
   product/                     <- visão, ICP, valores, prioridades
-  context/                     <- societário, accountancy, auth
+  context/                     <- societário, accountancy, identity
   planning/                    <- dashboard, features futuras, feature-map
-  integration/                 <- contratos backend → frontend
 
-features/
-  specs/                       <- specs aprovadas
+specs/                         <- specs aprovadas por domínio
+  [domínio]-[conceito]/        <- ex: societario-rastreamento/
+    spec.md                    <- spec de produto
+    impact-map.md              <- mapa de impacto cross-repo
+
+templates/                     <- modelos canônicos
+  specification.md             <- template de spec de produto
+  impact-map.md                <- template de mapa de impacto
+  integration.md               <- template de contrato backend → frontend
 ```
 
 ---
@@ -46,6 +52,9 @@ features/
 | Dependências entre features | `docs/planning/feature-map.md` |
 | Mapear impacto cross-repo | `.claude/commands/impact-map.md` |
 | Workflow feature → engenharia | `.claude/commands/to-engineering.md` |
+| Specs aprovadas | `specs/[domínio]-[conceito]/spec.md` |
+| Mapas de impacto aprovados | `specs/[domínio]-[conceito]/impact-map.md` |
+| Templates de documentação | `templates/` |
 
 ---
 

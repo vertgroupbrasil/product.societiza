@@ -1,107 +1,101 @@
 # Societiza — Mapa de Features e Integrações
 
-## Diagrama de dependências
-
-```
-+-----------------------------------------------------------------------------+
-|                              SOCIETIZA                                       |
-|                                                                              |
-|  +-------------+                                                             |
-|  |  identity   | <- autenticação + convites (parcialmente implementado)      |
-|  +------+------+                                                             |
-|         |                                                                    |
-|         v                                                                    |
-|  +-----------------+     +------------------------+                          |
-|  |   accountancy   |---->|   workflow-template    |                          |
-|  | (accountancyId) |     | (etapas/tasks/campos)  |                          |
-|  +-----------------+     +------------------------+                          |
-|         ^                                                                    |
-|         |                                                                    |
-|         |   [ PREVISTO MVP / NÃO IMPLEMENTADO AINDA ]                      |
-|         |                                                                    |
-|         |              +------------------------------+                      |
-|         |              |      workflow-process         |                     |
-|         |              |  (board/processos, MVP)       |                     |
-|         |              +----------+-----------+--------+                     |
-|         |                         |  ^                                       |
-|         |                         |  +---------------------------+           |
-|         |              +----------v-----------+                  |           |
-|         +--------------+       dashboard       |                 |           |
-|                        |  (analytics, pós-MVP) |-----------------+           |
-|                        +------------------------------+                      |
-|                                    |                                         |
-|                         +----------v----------+                              |
-|                         |    notifications    | (futura)                     |
-|                         +----------+----------+                              |
-|                                    |                                         |
-|                    +---------------v----------------+                        |
-|                    |       portal-do-cliente         | (futura)              |
-|                    +--------------------------------+                        |
-|                                                                              |
-|  +-------------+   +--------------+   +----------------------+              |
-|  |   alvaras   |   | certificados |   |  formulario-nativo   |              |
-|  |  (futuro)   |   |  (futuro)    |   |      (futuro)        |              |
-|  +------+------+   +------+-------+   +----------------------+              |
-|         |                 |                                                  |
-|         +--------+--------+                                                  |
-|                  v                                                            |
-|          workflow-process (conecta a operação societária)                     |
-+-----------------------------------------------------------------------------+
-```
+Este documento descreve as features da plataforma, suas dependências, os dados que compartilham e os pontos de acoplamento críticos. É a referência principal para entender o que existe, o que está planejado para o MVP e o que vem depois.
 
 ---
 
-## Tabela de integrações por feature
+## Estado atual (implementado)
 
-### Features existentes
+### identity
+Gerencia autenticação e convites. É a base de toda a plataforma — toda feature protegida depende dela para validar o usuário e obter o `accountancyId`.
 
-| Feature | Depende de | É consumida por | Dados compartilhados |
-|---|---|---|---|
-| `accountancy` | `identity` | `workflow-template`, `workflow-process` (MVP), `dashboard` (futuro) | `accountancyId` em todo template e convite |
-| `identity` | — | Todas as features protegidas | Token de identidade do usuário, `AccountancyId` |
-| `workflow-template` | `accountancy` | `workflow-process` (MVP) | `templateId`, `stepId`, `taskId`, `fieldId` |
+### accountancy
+Representa a contabilidade como unidade organizacional (multi-tenant). Toda feature da plataforma opera dentro do contexto de uma `accountancy`. Depende de `identity` para criação e autenticação.
 
-### Features do MVP ainda não implementadas
+### workflow-template
+Define a estrutura de processos societários disponibilizados pela Societiza. Templates são padrões criados e mantidos pela própria plataforma — a contabilidade não configura templates, ela os utiliza. Atualmente, o único template disponível reflete o processo societário do estado de Santa Catarina. Depende de `accountancy` para escopo organizacional. Será consumido pelo `workflow-process` no MVP.
 
-| Feature | Depende de (obrigatório) | Habilita |
-|---|---|---|
-| `workflow-process` | `accountancy`, `workflow-template` | `dashboard`, `notifications`, `alvaras` |
+---
 
-### Features pós-MVP
+## MVP — próximo a ser implementado
 
-| Feature | Depende de (obrigatório) | Habilita |
-|---|---|---|
-| `dashboard` | `workflow-process`, `accountancy` | Navegação filtrada de volta ao societário |
-| `notifications` | `workflow-process` (eventos) | `portal-do-cliente` |
-| `portal-do-cliente` | `workflow-process`, `notifications`, `accountancy` | Colaboração direta com o empresário |
-| `formulario-nativo` | `workflow-template` (campos), `accountancy` (branding) | Alimentação automática de dados no processo |
-| `alvaras` | `workflow-process` (processo societário) | `certificados`, `notifications` |
-| `certificados` | `accountancy` (dados do cliente) | `notifications` (vencimento) |
-| `automacao` | `workflow-template` (tarefas do template) | Redução de trabalho manual operacional |
-| `importacao-exportacao` | `workflow-process`, `workflow-template` | Adoção por contabilidades com histórico existente |
-| `mcp-server` | `workflow-process`, `accountancy` | IA com contexto real da operação |
+### workflow-process
+O board operacional da contabilidade. Cada processo é criado a partir de um `workflow-template` e executa dentro de uma `accountancy`. É o núcleo do MVP e habilita tudo que vem depois.
+
+**Depende de:** `accountancy`, `workflow-template`
+
+---
+
+## Pós-MVP (planejado, ordem de prioridade)
+
+### dashboard
+Painel de análise e navegação filtrada dos processos em andamento. Depende dos eventos e dados gerados pelo `workflow-process`.
+
+**Depende de:** `workflow-process`, `accountancy`
+
+### notifications
+Sistema de notificações baseado em eventos do `workflow-process`. Pré-requisito para o portal do cliente.
+
+**Depende de:** `workflow-process`  
+**Habilita:** `portal-do-cliente`
+
+### portal-do-cliente
+Interface de colaboração direta com o empresário. Permite que o cliente acompanhe e interaja com seus processos societários sem acessar o painel interno da contabilidade.
+
+**Depende de:** `workflow-process`, `notifications`, `accountancy`
+
+### importacao-exportacao
+Permite que contabilidades com histórico existente migrem dados para a plataforma ou exportem relatórios.
+
+**Depende de:** `workflow-process`, `workflow-template`
+
+### automacao
+Execução automática de tarefas recorrentes definidas nos templates, reduzindo trabalho manual operacional.
+
+**Depende de:** `workflow-template`
+
+### formulario-nativo
+Formulário estruturado para captura de dados do cliente, integrado aos campos configurados no `workflow-template`. Alimenta o processo automaticamente sem necessidade de entrada manual pela contabilidade.
+
+**Depende de:** `workflow-template` (campos), `accountancy` (branding)
+
+### mcp-server
+Servidor MCP que expõe o contexto real da operação para modelos de linguagem, permitindo IA com conhecimento do estado atual da contabilidade.
+
+**Depende de:** `workflow-process`, `accountancy`
+
+### alvarás
+Produto futuro da Societiza para gestão do ciclo de vida de alvarás. Pode ter relação com o processo societário, mas ainda não há previsão de desenvolvimento. Está entre as últimas prioridades do pós-MVP.
+
+### certificados
+Produto futuro para gestão de certidões e documentos com validade vinculados ao cliente. Também sem previsão de desenvolvimento. Está entre as últimas prioridades do pós-MVP, junto com `alvarás`.
 
 ---
 
 ## Dados compartilhados entre features
 
-| Chave | Tipo | Papel no sistema |
-|---|---|---|
-| `accountancyId` | UUID | Discriminante multi-tenant. Presente em User, UserInvite e WorkflowTemplate. É o contorno organizacional da Societiza. |
-| `templateId` | UUID | Vincula processo ao template usado na criação. Identifica qual configuração de etapas/tarefas está em uso. |
-| `processId` | UUID | Chave futura — conectará workflow-process → alvarás → certificados → notificações → portal do cliente. Não existe hoje (WorkflowProcess não implementado). |
-| `stepId` | UUID | Identifica uma etapa dentro de um template. A ordem (`step.order`) é semântica operacional. |
-| `taskId` | UUID | Identifica uma tarefa dentro de uma etapa. A ordem (`task.order`) também é semântica. |
-| `fieldId` | UUID | Identifica um campo dentro de uma tarefa ou etapa. |
+Estas chaves circulam entre features e devem ser tratadas como contratos estáveis.
+
+**`accountancyId`** — discriminante multi-tenant. Presente em usuários, convites e templates. É o contorno organizacional de toda a plataforma.
+
+**`templateId`** — vincula um processo ao template usado na sua criação. Define quais etapas e tarefas o processo vai seguir.
+
+**`processId`** — chave futura que conectará `workflow-process` → `alvarás` → `certificados` → `notifications` → `portal-do-cliente`. Não existe ainda.
+
+**`stepId`** — identifica uma etapa dentro de um template. A ordem (`step.order`) é semanticamente significativa para a operação.
+
+**`taskId`** — identifica uma tarefa dentro de uma etapa. A ordem (`task.order`) também é semântica.
+
+**`fieldId`** — identifica um campo dentro de uma tarefa ou etapa.
 
 ---
 
 ## Pontos de acoplamento críticos
 
-### templateId como configuração do processo
+### templateId como configuração imutável do processo
 
-Quando um processo é criado, ele é associado a um template. Esse template define
-as etapas e tarefas que o processo vai seguir. Alterar o template depois que
-processos estão em andamento é uma operação sensível — o sistema atualmente não
-tem mecanismo de migração para processos já criados com versões anteriores do
-template.
+Quando um processo é criado, ele é associado a um template. Esse template define as etapas e tarefas que o processo vai seguir. Alterar o template depois que processos estão em andamento é uma operação sensível — o sistema atualmente não tem mecanismo de migração para processos já criados com versões anteriores do template.
+
+### accountancyId como contorno de tudo
+
+Toda feature opera dentro do escopo de uma `accountancy`. Qualquer feature que crie, liste ou altere dados precisa filtrar por `accountancyId`. Isso é o que garante o isolamento entre contabilidades diferentes.

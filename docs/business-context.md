@@ -264,4 +264,3 @@ compartilhados e pontos de acoplamento críticos está em:
 | [`planning/dashboard.md`](planning/dashboard.md) | Dashboard: visão, dados, dependências |
 | [`planning/future-features.md`](planning/future-features.md) | Todas as features futuras planejadas |
 | [`planning/feature-map.md`](planning/feature-map.md) | Status, dependências, dados compartilhados |
-| [`integration/TEMPLATE.md`](integration/TEMPLATE.md) | Template de documentação backend → frontend |
