@@ -136,6 +136,61 @@ usuário final pode ler e reconhecer como verdadeiro sobre o próprio problema.
 
 ---
 
+## Skill: Excalidraw Diagram
+
+A skill `excalidraw-diagram` gera diagramas Excalidraw a partir de descrições
+em linguagem natural. Não são diagramas decorativos — são **argumentos
+visuais** que tornam workflows, arquiteturas e conceitos compreensíveis de
+forma que texto sozinho não consegue.
+
+### Diagramas que argumentam, não exibem
+
+O diferencial central desta skill é tratar cada diagrama como um argumento
+visual, não como texto formatado em caixas. Cada forma e agrupamento espelha
+o conceito que representa — fan-outs para relações um-para-muitos, timelines
+para sequências, convergência para agregação. Se remover todo o texto, a
+estrutura sozinha ainda comunica o conceito.
+
+**Artefatos de evidência.** Diagramas técnicos incluem exemplos concretos —
+snippets de código reais, payloads JSON, nomes de eventos da spec, mockups
+de UI. Não caixas genéricas com "Input" e "Output", mas o que os dados
+realmente parecem.
+
+**Arquitetura multi-zoom.** Diagramas abrangentes operam em três níveis
+simultâneos: fluxo resumido (visão geral do pipeline), seções agrupadas
+(fronteiras de responsabilidade) e detalhes internos (artefatos de evidência
+dentro de cada seção).
+
+**Validação visual integrada.** Um pipeline baseado em Playwright renderiza
+o diagrama gerado, permitindo que o agente veja o próprio output, detecte
+problemas de layout (textos sobrepostos, setas desalinhadas, espaçamento
+desbalanceado) e corrija antes de entregar.
+
+**Customizável por marca.** Todas as cores e estilos vivem em um único
+arquivo (`references/color-palette.md`). Para adaptar os diagramas à
+identidade visual do projeto, basta editar esse arquivo — todo o resto da
+skill é metodologia universal de design.
+
+### Setup
+
+Para configurar o renderer de validação visual, peça ao agente:
+*"Configure o renderer da skill excalidraw-diagram seguindo as instruções
+do SKILL.md."* Ou manualmente:
+
+```bash
+cd .claude/skills/excalidraw-diagram/references
+uv sync
+uv run playwright install chromium
+```
+
+### Uso
+
+Descreva o que precisa ser visualizado em linguagem natural. A skill cuida
+do mapeamento conceitual, layout, geração do JSON Excalidraw, renderização
+e validação visual.
+
+---
+
 ## Como trabalhar com este repositório
 
 ### Agente principal
