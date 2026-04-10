@@ -1,16 +1,25 @@
-# TEMPLATE — Documentação de Feature Backend para Consumo do Frontend
+# TEMPLATE — Contrato de Integração Backend → Frontend
 
-Este arquivo é o modelo canônico que o backend deve preencher e publicar sempre
-que uma feature nova, alterada ou expandida precisar ser integrada no frontend.
+Este arquivo é o modelo canônico para geração do contrato de integração de uma
+feature após sua implementação no backend.
 
-Ao criar a documentação de uma feature específica, copiar este template e salvar
-como `docs/integration/[nome-da-feature].md`.
+## Quem gera
 
-> Template armazenado em `templates/integration.md`.
+O agente de produto (`product.societiza`) gera este documento automaticamente
+lendo o código de `api.societiza` via MCP do GitHub e cruzando com a spec
+aprovada da feature. O backend (tech lead ou dev responsável) revisa e aprova
+antes de o documento ser considerado canônico.
 
-> Para contexto completo de produto antes de documentar, ler primeiro:
-> - `../business-context.md` — regras de negócio e contexto do produto
-> - `../planning/feature-map.md` — dependências e integrações entre features
+## Onde salvar
+
+Salvar como `specs/[domínio]-[conceito]/integration.md` dentro de
+`product.societiza`. O `web.societiza` consome via MCP do GitHub ao integrar.
+
+## Insumos necessários para geração
+
+- Spec aprovada: `specs/[domínio]-[conceito]/spec.md`
+- Código do backend: lido via MCP do GitHub em `api.societiza`
+- Contexto do produto: `docs/business-context.md` e `docs/planning/feature-map.md`
 
 ---
 
@@ -304,36 +313,3 @@ parece completa, mas esconde incerteza.
 
 ---
 
-## Prompt para IA do backend gerar esta documentação
-
-```
-Você vai criar uma documentação de feature backend voltada para consumo do time
-de frontend da Societiza.
-
-Importante:
-- não escreva apenas uma lista de endpoints;
-- não escreva apenas uma descrição de implementação interna;
-- não escreva como se o frontend conhecesse o domínio implicitamente;
-- explique a feature como contrato de negócio + contrato técnico;
-- deixe explícito o que já existe, o que é parcial e o que ainda é futuro;
-- sempre escreva em parágrafos quando estiver explicando papel de produto,
-  semântica e impacto;
-- sempre documente edge cases, estados de negócio, erros esperados e gaps.
-
-Gere a documentação seguindo exatamente a estrutura do arquivo
-docs/integration/TEMPLATE.md do projeto web.societiza.
-
-Contexto técnico global da Societiza:
-- backend usa /api como path base;
-- versionamento atual por URL, normalmente /api/v1/...;
-- existe envelope global de erro com statusCode, message, path, traceId, errors e detail;
-- o backend atual é modular e orientado a DDD/CQRS/event sourcing em várias áreas;
-- o frontend da Societiza trabalha com endpoints centralizados, schemas, tipos
-  inferidos, service layer, query options, hooks de query, hooks de mutation,
-  refetch/invalidate e UI otimista quando fizer sentido;
-- portanto, sua documentação precisa ajudar o frontend a entender contrato,
-  semântica, efeitos e edge cases, e não apenas o endpoint cru.
-
-Se houver desalinhamento entre produto, frontend legado e backend atual,
-explicite esse desalinhamento na documentação em vez de escondê-lo.
-```

@@ -1,21 +1,21 @@
-# Rule — Cross-Repo Boundary
+# Regra — Fronteira Cross-Repo
 
-Scope: orchestration
+Escopo: orchestration
 
-## Never do
+## Nunca fazer
 
-- Write application code (.cs, .tsx, .ts, .csproj, package.json)
-- Create components, hooks, services, or endpoints
-- Alter database migrations or infrastructure config
-- Make implementation decisions that belong to execution repos
+- Escrever código de aplicação (.cs, .tsx, .ts, .csproj, package.json)
+- Criar componentes, hooks, services ou endpoints
+- Alterar migrations de banco de dados ou configurações de infraestrutura
+- Tomar decisões de implementação que pertencem aos repos de execução
 
-## Always do
+## Sempre fazer
 
-- Produce feature specs in `features/specs/`
-- Reference execution repos by name (api.societiza, web.societiza)
-- Map cross-repo impact before distributing work
+- Produzir specs de feature em `specs/[domínio]-[conceito]/spec.md`
+- Referenciar repos de execução pelo nome (api.societiza, web.societiza)
+- Mapear impacto cross-repo antes de distribuir o trabalho
 
-## Reason
+## Razão
 
-This repo orchestrates product decisions and distributes them. It does not
-execute. Implementation happens in api.societiza and web.societiza.
+Este repo orquestra decisões de produto e as distribui. Ele não executa.
+A implementação acontece em api.societiza e web.societiza.

@@ -52,4 +52,4 @@ são todos scoped ao `accountancyId` da sessão.
 A Accountancy é a estrutura vigente no sistema. Reestruturações futuras (como
 modelo de auto-criação pelo contador, planos de assinatura e suporte a múltiplas
 contabilidades por usuário) estão sendo planejadas na spec
-`specs/accountancy-escritorios/spec.md`, ainda aguardando aprovação.
+`specs/accountancy-offices/spec.md`, ainda aguardando aprovação.

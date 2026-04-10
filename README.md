@@ -30,11 +30,9 @@ implícita em uma conversa.
 
 ## Ecossistema
 
-```
-societiza/skills          <- este repo (orquestrador de produto)
-societiza/api             <- backend (.NET 9)
-societiza/web             <- frontend (Next.js)
-```
+- [`product.societiza`](https://github.com/vertgroupbrasil/product.societiza) — este repo (orquestrador de produto)
+- [`api.societiza`](https://github.com/vertgroupbrasil/api.societiza) — backend (.NET 9)
+- [`web.societiza`](https://github.com/vertgroupbrasil/web.societiza) — frontend (Next.js)
 
 Os repos de execução não esperam que o produto vá até eles. A comunicação é
 estruturada via **agente + MCP do GitHub**: `api.societiza` e `web.societiza`
@@ -65,13 +63,12 @@ de produto aqui, sem depender de memória humana.
   rules/
     cross-repo.md          <- o que este repo faz e não faz
     spec-first.md          <- spec aprovada antes de qualquer implementação
-    integration.md         <- guardrails de integração e comportamento de IA
   CLAUDE.md                <- instruções gerais do repositório
 
 docs/
   product/
     product-vision.md      <- identidade, ICP, valores, diretrizes de features
-    product-priorities.md  <- semântica de prioridades P0–P5
+    product-priorities.md  <- semântica de prioridades P1–P5
   context/
     societario-context.md  <- workflow, template, board, campos
     accountancy-context.md <- accountancy como unidade multi-tenant
@@ -83,9 +80,10 @@ docs/
   business-context.md      <- índice de contexto do produto (leitura obrigatória)
 
 specs/
-  [domínio]-[conceito]/    <- ex: societario-rastreamento/
+  [domínio]-[conceito]/    <- ex: societario-tracking/
     spec.md                <- spec de produto aprovada
     impact-map.md          <- mapa de impacto cross-repo
+    integration.md         <- contrato backend → frontend (gerado após implementação)
 
 templates/
   specification.md         <- modelo canônico de spec de produto
@@ -178,4 +176,3 @@ Toda sessão carrega as rules em `.claude/rules/` automaticamente:
 
 - **spec-first** — nenhuma feature é implementada sem spec aprovada
 - **cross-repo** — este repo produz specs e mapas de impacto, não código
-- **integration** — guardrails para evitar que a IA invente features ou mascare lacunas

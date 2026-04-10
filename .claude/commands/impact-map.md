@@ -7,12 +7,20 @@ muda em cada repo e quais são os riscos de integração.
 
 ## Pré-condições
 
-- [ ] Spec da feature aprovada em `features/specs/`
+- [ ] Spec da feature aprovada em `specs/[domínio]-[conceito]/spec.md`
+
+## Estrutura de specs
+
+Specs vivem em `specs/[domínio]-[conceito]/` com arquivos fixos:
+- `spec.md` — spec de produto (input deste command)
+- `impact-map.md` — output deste command
+
+Domínios válidos: `societario`, `accountancy`, `dashboard`, `identity`.
 
 ## Inputs obrigatórios
 
-- `feature-name`: nome da feature
-- `spec-path`: caminho para a spec aprovada
+- `feature-name`: nome da feature no formato `[domínio]-[conceito]`
+- `spec-path`: `specs/{feature-name}/spec.md`
 
 ## Passos
 
@@ -21,7 +29,7 @@ muda em cada repo e quais são os riscos de integração.
 3. Identificar módulos do backend afetados (aggregates, events, endpoints)
 4. Identificar features do frontend afetadas (schemas, hooks, components)
 5. Listar breaking changes e riscos de integração
-6. Produzir documento de impacto com checklist por repo
+6. Produzir documento de impacto e salvar em `specs/{feature-name}/impact-map.md`
 
 ## Output esperado
 

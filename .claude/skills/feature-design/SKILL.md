@@ -88,10 +88,36 @@ quais são as implicações para precificação, planos e decisões de build-or-
 Gere um documento markdown e salve em:
 
 ```
-features/specs/[nome-da-feature].md
+specs/[domain]-[concept]/spec.md
 ```
 
-Use o nome da feature como nome do arquivo, em kebab-case, sem datas.
+### Convenção de nomenclatura obrigatória
+
+O nome da pasta segue o formato `[domain]-[concept-in-up-to-2-words]`.
+
+**Regras de idioma:**
+- Nomes de pasta e arquivo são sempre em inglês
+- Exceção: `societario` pode ser usado em português (não tem equivalente preciso em inglês)
+- O conteúdo dos documentos é sempre em português
+
+**Estrutura:**
+- `[domain]` é sempre um dos domínios do produto: `societario`, `accountancy`, `dashboard`, `identity`
+- `[concept]` é o nome curto da feature, em kebab-case, máximo 2 palavras, em inglês
+- A pasta contém sempre dois arquivos com nomes fixos:
+  - `spec.md` — a spec de produto (baseada em `templates/specification.md`)
+  - `impact-map.md` — o mapa de impacto cross-repo (baseado em `templates/impact-map.md`)
+
+Exemplos corretos:
+```
+specs/societario-tracking/spec.md
+specs/accountancy-offices/spec.md
+specs/dashboard-overview/spec.md
+specs/identity-invites/spec.md
+```
+
+Nunca usar caminhos planos como `specs/[feature-name].md`.
+Nunca usar sufixos como `-impact`, `-contract`, `-v2` no nome da pasta.
+Nunca usar português no nome da pasta (exceto `societario`).
 
 O documento deve conter as seguintes seções:
 
@@ -119,8 +145,16 @@ O que está explicitamente fora do escopo. Previne desvios.
 #### 7. Custos adicionais
 Serviços externos, APIs, armazenamento. Ou: "Nenhum custo externo identificado."
 
-#### 8. Perguntas abertas
+#### 8. Decisões tomadas
+Tabela de decisões de produto fechadas durante o processo de spec.
+Formato: `| Ponto | Decisão |`. Cresce a cada iteração da spec.
+Quando uma pergunta aberta é respondida, sai da seção 9 e entra aqui.
+
+#### 9. Perguntas abertas
 Decisões não resolvidas. Informações faltantes. Honesto sobre incertezas.
+Se não houver nenhuma: "Nenhuma. Todas as decisões de produto estão fechadas."
+Nunca omitir esta seção — uma spec sem perguntas abertas declaradas escondeu
+suas incertezas.
 
 ---
 

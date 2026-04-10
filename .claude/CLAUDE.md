@@ -1,4 +1,4 @@
-# Societiza Skills — Hub de Orquestração
+# Societiza — Hub de Produto e Orquestração
 
 Este repo não contém código. Ele recebe intenções de produto, produz specs
 aprovadas por humano e mapas de impacto que os repos de execução consomem.
@@ -14,7 +14,7 @@ Repos de execução: `api.societiza` (.NET 9) · `web.societiza` (Next.js)
   agents/product-thinking.md   <- agente principal
   skills/feature-design/       <- skill de planejamento de produto
   commands/                    <- to-engineering, impact-map
-  rules/                       <- spec-first, cross-repo, integration
+  rules/                       <- spec-first, cross-repo
 
 docs/
   business-context.md          <- índice de contexto (leitura obrigatória)
@@ -23,9 +23,10 @@ docs/
   planning/                    <- dashboard, features futuras, feature-map
 
 specs/                         <- specs aprovadas por domínio
-  [domínio]-[conceito]/        <- ex: societario-rastreamento/
+  [domínio]-[conceito]/        <- ex: societario-tracking/
     spec.md                    <- spec de produto
     impact-map.md              <- mapa de impacto cross-repo
+    integration.md             <- contrato backend → frontend (gerado após implementação)
 
 templates/                     <- modelos canônicos
   specification.md             <- template de spec de produto
@@ -54,6 +55,7 @@ templates/                     <- modelos canônicos
 | Workflow feature → engenharia | `.claude/commands/to-engineering.md` |
 | Specs aprovadas | `specs/[domínio]-[conceito]/spec.md` |
 | Mapas de impacto aprovados | `specs/[domínio]-[conceito]/impact-map.md` |
+| Contratos de integração aprovados | `specs/[domínio]-[conceito]/integration.md` |
 | Templates de documentação | `templates/` |
 
 ---
@@ -64,4 +66,3 @@ Carregadas automaticamente de `.claude/rules/`:
 
 - **spec-first** — nenhuma feature implementada sem spec aprovada por humano
 - **cross-repo** — este repo produz specs e mapas de impacto, não código
-- **integration** — guardrails para evitar invenção de features ou mascaramento de lacunas
