@@ -1,194 +1,178 @@
-# Skills — Guia de Uso
+# Societiza — Hub de Produto e Orquestração
 
-Skills são comportamentos especializados que o Claude carrega sob demanda.
-Em vez de ter um assistente genérico, cada skill transforma o Claude em um
-especialista para um contexto específico.
+Este repositório é o centro do ecossistema Societiza. Ele não contém
+código de aplicação. Seu papel é receber intenções de produto, transformá-las
+em decisões claras e distribuir o trabalho certo para os repos certos.
 
-Este projeto tem duas skills principais: uma para planejar produto e outra
-para planejar implementação de código.
-
----
-
-## Como ativar uma skill
-
-Você não usa comando nenhum. Basta descrever o que quer fazer em linguagem
-natural. O Claude identifica qual skill é adequada e a ativa automaticamente.
-
-Exemplos:
-
-```
-"quero planejar a feature de notificações"
-"preciso de uma especificação de produto para o portal do cliente"
-"vamos implementar o kanban, me ajuda a planejar"
-"quero definir o que seria a feature de relatórios antes de codar"
-```
+Tudo que é implementado nos repos de execução começa aqui — como uma spec
+aprovada por um humano, depois de análise de coerência de produto, fit no
+ecossistema, dependências e escopo.
 
 ---
 
-## `societiza-product-plan`
+## Por que este repo existe
 
-**Para usar:** Descreva uma ideia ou feature que você quer pensar antes de
-construir.
+Times de produto e engenharia costumam divergir porque o contexto de produto
+não está estruturado onde a engenharia trabalha. A engenharia implementa o que
+entende, não o que o produto precisa. O produto pede o que parece certo, sem
+saber o que o ecossistema já tem ou o que quebra.
 
-### O que faz
+Este repo resolve isso criando uma camada explícita de orquestração:
+- O produto pensa aqui
+- As decisões são documentadas aqui
+- A engenharia busca os insumos aqui
 
-Planeja produto com mentalidade Steve Jobs. Antes de escrever uma linha de
-código, responde a pergunta mais importante: **essa feature deve existir, e se
-sim, o que exatamente ela deve ser?**
-
-Não produz código, arquitetura, ou decisões técnicas. Só produto: o usuário,
-o problema, a experiência, o fit com o produto, e os custos.
-
-### Quando usar
-
-- Quando você tem uma ideia mas não sabe se vale construir
-- Quando quer definir o escopo antes de entrar no código
-- Quando precisa de um documento de especificação para alinhar expectativas
-
-### O que a skill faz internamente
-
-1. Lê `docs/business-context.md` e `docs/feature-map.md` para entender o
-   produto atual
-2. Analisa o problema real, para quem é, o fit com o produto, e o custo
-3. Gera um documento de especificação salvo em:
-
-```
-docs/features/product/[nome-da-feature].md
-```
-
-### O que o documento gerado contém
-
-- Visão da feature (na linguagem do usuário, sem jargão técnico)
-- Problema que resolve (específico, real, com contexto)
-- Para quem é (qual perfil, em qual situação)
-- Como melhora a experiência atual (antes e depois)
-- Como se conecta com o produto existente (dependências e o que habilita)
-- O que não é — escopo negativo explícito
-- Custos adicionais (se houver serviços externos)
-- Perguntas abertas (decisões não resolvidas)
-
-### Exemplo de conversa
-
-```
-você: "quero planejar a feature de portal do cliente"
-
-Claude: [ativa societiza-product-plan, lê o contexto do produto, faz
-perguntas se necessário, gera docs/features/product/portal-do-cliente.md]
-```
+Nenhuma feature é implementada sem uma spec aprovada. Nenhum repo recebe
+trabalho sem saber o impacto cross-repo. Nenhuma decisão de produto fica
+implícita em uma conversa.
 
 ---
 
-## `societiza-feature-plan`
+## Ecossistema
 
-**Para usar:** Diga que quer implementar uma feature específica.
+- [`product.societiza`](https://github.com/vertgroupbrasil/product.societiza) — este repo (orquestrador de produto)
+- [`api.societiza`](https://github.com/vertgroupbrasil/api.societiza) — backend (.NET 9)
+- [`web.societiza`](https://github.com/vertgroupbrasil/web.societiza) — frontend (Next.js)
 
-### O que faz
+Os repos de execução não esperam que o produto vá até eles. A comunicação é
+estruturada via **agente + MCP do GitHub**: `api.societiza` e `web.societiza`
+buscam specs e mapas de impacto diretamente neste repositório. Quando uma
+feature é aprovada e o impacto é mapeado, os repos de execução têm acesso
+imediato aos artefatos — sem repassar contexto manualmente, sem sumarizar em
+PR descriptions o que já está documentado aqui.
 
-Planeja a implementação de código de uma feature. Lê as regras de código do
-projeto, entende o contexto de negócio da feature, e gera um plano técnico
-completo com arquivos a criar, ordem de implementação e verificação.
+Este repo é a fonte de verdade de produto para todo o ecossistema. Qualquer
+agente rodando em `api.societiza` ou `web.societiza` pode consultar o contexto
+de produto aqui, sem depender de memória humana.
 
-### Quando usar
+---
 
-- Quando a feature já está definida (tem especificação de produto ou regra de
-  negócio clara) e você quer planejar o código
-- Antes de começar a implementar qualquer feature nova
-- Quando quer garantir que a implementação vai seguir as regras do projeto
-
-### Pré-requisito
-
-A feature precisa estar definida. Se não houver especificação em
-`docs/features/product/` nem regra de negócio documentada, a skill para e
-redireciona para `societiza-product-plan` primeiro.
-
-Se você tiver a regra de negócio na cabeça mas não documentada, pode fornecer
-manualmente na conversa e a skill aceita isso como base.
-
-### O que a skill faz internamente
-
-1. Busca a regra de negócio da feature em `docs/`
-2. Pergunta: frontend ou backend?
-3. Carrega **todos** os arquivos de regras de código correspondentes:
-   - Frontend: `.agents/skills/societiza-feature-plan/references/frontend-code-rules/`
-   - Backend: `.agents/skills/societiza-feature-plan/references/backend-code-rules/`
-4. Verifica se existe contrato de integração em `docs/integration/`
-5. Gera o plano de implementação
-
-### O que o plano gerado contém
-
-- **Mapa de integração técnica** — o que já existe no codebase que é relevante
-- **Arquivos a criar ou modificar** — caminho, responsabilidade e justificativa
-  de cada arquivo
-- **Ordem de implementação** — dependências explícitas entre cada passo
-- **Verificação end-to-end** — como confirmar que a feature funciona depois
-
-### Boundary rules (não negociáveis)
-
-**Se backend foi selecionado:** frontend não existe na conversa. Zero menção
-a componentes, hooks, schemas de UI ou caminhos de arquivo frontend.
-
-**Se frontend foi selecionado:** backend é bloqueado por padrão. A skill pode
-sugerir uma melhoria de backend uma única vez se isso impactar diretamente a
-experiência do usuário — mas só se você permitir.
-
-### Exemplo de conversa
+## Estrutura do repositório
 
 ```
-você: "vamos implementar a feature de auth, preciso de um plano"
+.claude/
+  agents/
+    product-thinking.md    <- agente principal (cérebro de produto)
+  skills/
+    feature-design/
+      SKILL.md             <- skill de planejamento de produto
+      references/          <- materiais de referência da skill
+  commands/
+    to-engineering.md      <- workflow completo: spec → impacto → distribuição
+    impact-map.md          <- mapeamento de impacto cross-repo
+  rules/
+    cross-repo.md          <- o que este repo faz e não faz
+    spec-first.md          <- spec aprovada antes de qualquer implementação
+  CLAUDE.md                <- instruções gerais do repositório
 
-Claude: [ativa societiza-feature-plan, busca regra de negócio de auth,
-pergunta frontend ou backend, carrega todas as regras de código, gera plano]
+docs/
+  product/
+    product-vision.md      <- identidade, ICP, valores, diretrizes de features
+    product-priorities.md  <- semântica de prioridades P1–P5
+  context/
+    societario-context.md  <- workflow, template, board, campos
+    accountancy-context.md <- accountancy como unidade multi-tenant
+    identity-context.md    <- estado e lacunas de autenticação
+  planning/
+    dashboard.md           <- próxima feature obrigatória
+    future-features.md     <- todas as features futuras planejadas
+    feature-map.md         <- dependências e acoplamento entre features
+  business-context.md      <- índice de contexto do produto (leitura obrigatória)
+
+specs/
+  [domínio]-[conceito]/    <- ex: societario-tracking/
+    spec.md                <- spec de produto aprovada
+    impact-map.md          <- mapa de impacto cross-repo
+    integration.md         <- contrato backend → frontend (gerado após implementação)
+
+templates/
+  specification.md         <- modelo canônico de spec de produto
+  impact-map.md            <- modelo de mapa de impacto
+  integration.md           <- modelo de contrato backend → frontend
 ```
 
 ---
 
-## Fluxo ideal entre as duas skills
+## Skill: Feature Design
 
-```
-1. societiza-product-plan
-   → define o que a feature é, para quem, e por quê
-   → salva em docs/features/product/[feature].md
+A skill `feature-design` é o motor de pensamento de produto do ecossistema.
 
-2. societiza-feature-plan
-   → lê a especificação gerada
-   → planeja como implementar no código
-   → você aprova o plano
+Ela não lista requisitos. Não produz backlog. Não define sprint. Ela responde
+à pergunta mais importante antes de qualquer linha de código ser escrita:
+**isso deve existir e, se sim, o que exatamente deve ser?**
 
-3. implementação
-   → código segue o plano aprovado
+### Mentalidade Steve Jobs
 
-4. commit
-   → só depois que você testar e liberar
-```
+O diferencial central desta skill é o framework de pensamento baseado na
+mentalidade de Jobs. Antes de qualquer análise de fit, dependências ou escopo,
+a skill força clareza sobre o que realmente importa:
 
-Nunca pule a etapa 1 achando que a feature "é óbvia". Features sem
-especificação acumulam retrabalho e scope creep.
+**Produto é experiência, não software.** A pergunta não é "o que esse módulo
+faz?" É "o que o usuário sente quando usa isso?" Mais funcionalidade quase
+sempre piora a experiência — porque adiciona fricção, confusão e sobrecarga
+cognitiva.
+
+**Qual é o problema real?** Não o que a feature faz — que dor específica ela
+elimina, para quem, com que frequência, e o que o usuário faz hoje sem ela.
+Features sem problema definido são devolvidas para refinamento.
+
+**O que você não constrói importa tanto quanto o que você constrói.** Uma
+feature que não lança não cria dívida de produto, não distrai o usuário, não
+cria expectativa que precisa ser sustentada. Dizer não é uma forma de proteção,
+não de limitação.
+
+**Versão mínima que importa.** Qual é a menor versão desta feature que faria
+um usuário dizer "finalmente"? Não a visão completa — a menor versão com
+impacto real.
+
+**Custo além do código.** Se a feature exige serviços externos, APIs de
+terceiros ou integrações, esse custo é parte da decisão de produto — não só
+do plano financeiro.
+
+A skill não aprova uma feature se não consegue responder pelo menos 8 das 10
+perguntas obrigatórias do framework. O output é sempre um documento na
+linguagem do usuário — sem código, sem arquitetura, sem stack. Algo que o
+usuário final pode ler e reconhecer como verdadeiro sobre o próprio problema.
 
 ---
 
-## Onde ficam as regras de código
+## Como trabalhar com este repositório
 
-As regras que a `societiza-feature-plan` carrega ficam em:
+### Agente principal
 
-```
-.agents/skills/societiza-feature-plan/references/frontend-code-rules/
-├── 01-architecture.md
-├── 02-creating-a-feature.md
-├── 03-typescript-and-schemas.md
-├── 04-queries.md
-├── 05-mutations.md
-├── 06-forms.md
-├── 07-components.md
-├── 08-naming-conventions.md
-├── 09-testing.md
-├── 10-imports-and-barrels.md
-├── 11-build-and-quality.md
-├── 12-git-and-commits.md
-├── 13-documentation.md
-├── 14-folder-contracts.md
-└── 15-workflow-domain.md
-```
+O agente `product-thinking` (`.claude/agents/product-thinking.md`) é o ponto
+de entrada para qualquer sessão de produto. Ele lê o contexto, faz triagem de
+prioridade e decide qual caminho seguir.
 
-Esses arquivos são a memória técnica do projeto. Quando o Claude comete um
-erro de padrão e você corrige, a regra correspondente deve ser atualizada
-para que o erro não se repita.
+### Dois caminhos de trabalho
+
+**Caminho de produto** — quando a ideia ainda está sendo formada.
+
+Descreva a ideia em linguagem natural. O agente invoca `feature-design`, que
+lê o contexto, aplica o framework de pensamento e gera uma spec em
+`specs/`. O humano aprova ou pede revisões. Nenhum repo de execução
+é acionado.
+
+**Caminho de execução** — quando a decisão de produto já foi tomada.
+
+O agente segue o command `to-engineering`:
+1. Verifica se já existe uma spec para a feature
+2. Se não existe, invoca `feature-design` para gerar
+3. Apresenta a spec ao humano — aguarda aprovação explícita
+4. Executa `impact-map` para mapear o que muda em cada repo
+5. Distribui: cada repo recebe o insumo correspondente
+
+### Mapear impacto cross-repo
+
+Ver `.claude/commands/impact-map.md`. Executado sempre antes de distribuir
+trabalho. Identifica módulos de backend afetados, features de frontend afetadas,
+breaking changes e ordem sugerida de implementação.
+
+---
+
+## Regras ativas
+
+Toda sessão carrega as rules em `.claude/rules/` automaticamente:
+
+- **spec-first** — nenhuma feature é implementada sem spec aprovada
+- **cross-repo** — este repo produz specs e mapas de impacto, não código
