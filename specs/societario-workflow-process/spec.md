@@ -97,9 +97,11 @@ agregada.
 **Depois:**
 O contador abre o board e vê todos os processos da contabilidade, cada um
 no seu lugar, com tipo explícito, etapa atual, tarefas pendentes e campos
-preenchidos. Criar um processo novo é escolher o tipo e o cliente. Avançar
-um processo é agir sobre a etapa atual. Concluir é o resultado natural de
-completar as tarefas obrigatórias. O estado do processo passa a existir no
+preenchidos. Criar um processo novo é escolher o tipo e identificar o
+cliente. Avançar não é uma ação — é consequência: ao concluir as tarefas
+obrigatórias da etapa atual, a etapa se fecha e o processo passa
+automaticamente para a próxima. Concluir o processo é o resultado natural
+de fechar todas as etapas obrigatórias. O estado do processo passa a existir no
 sistema, não na memória. A equipe compartilha a mesma visão. Responder
 "como está o processo do cliente X?" deixa de ser uma investigação e passa
 a ser uma consulta direta.
@@ -159,10 +161,14 @@ utilizável para a operação real da contabilidade.
   pessoal do autor do processo fica fora do MVP.
 - **Não inclui** justificativa obrigatória para salto de tarefa. O salto é
   rastreado por quem e quando, mas o motivo não é um campo exigido.
-- **Não inclui** arquivamento, remoção ou ocultação automática de processos
-  concluídos do board. Processos concluídos permanecem na coluna
-  "concluído". (Como tratar a poluição do board ao longo do tempo é uma
-  pergunta aberta — ver seção 9.)
+- **Não inclui** remoção, exclusão ou arquivamento destrutivo de processos
+  concluídos — e isso não é só "fora do MVP", é uma restrição permanente
+  do produto: processos concluídos são a única memória estável da relação
+  com o cliente-alvo (que é texto livre) e precisam ser preservados. No
+  MVP, processos concluídos permanecem visíveis na coluna "concluído".
+  (Como tratar a poluição visual do board ao longo do tempo — via
+  ocultação ou filtros puramente visuais — é uma pergunta aberta; ver
+  seção 9.)
 - **Não inclui** importação de processos existentes de outras fontes.
   Importação é uma capacidade futura (P4).
 - **Não inclui** notificações, alertas de gargalo ou e-mails de
@@ -198,17 +204,21 @@ que já suporta o WorkflowTemplate e a Accountancy.
 | Materialização por tipo | Steps marcados com `appliesTo` no template materializam apenas para os tipos relevantes quando o Process nasce. |
 | Versionamento do Process | Versionamento por fotografia: o Process copia o template (incluindo versão) no momento da criação e não reflete mudanças posteriores do template. |
 | Criação do processo | Criação manual pelo contador. Não há criação automática no MVP. |
-| Campos do Process | Referência ao template (com versão), tipo, cliente/empresa-alvo, estado (em andamento / concluído), timestamps de criação e conclusão. |
+| Materialização runtime — convenção de nomes | As entidades runtime criadas a partir do template usam o sufixo `Instance` para deixar explícito que são materializações, não definições. Nomes canônicos: `ProcessStepInstance`, `ProcessStepTaskInstance`, `ProcessStepFieldInstance`, `ProcessStepTaskFieldInstance`. |
+| Campos do Process | Referência ao template (com versão), tipo, cliente-alvo (texto livre — ver linha dedicada abaixo), estado (em andamento / concluído), timestamps de criação e conclusão. |
+| Identificação do cliente-alvo | No MVP, o cliente-alvo do processo é um campo de **texto livre** preenchido pelo contador. Não há referência a uma entidade `Client` — essa entidade não existe no MVP. |
 | Responsável do processo | Não há responsável principal no MVP. |
 | Autor do processo | Não é registrado no MVP quem criou o processo. |
 | Estado do Process | Dois estados: em andamento e concluído. |
-| Critério de conclusão | O Process é concluído quando todas as Steps obrigatórias estão concluídas. |
-| Processos concluídos no board | Permanecem visíveis na coluna "concluído". (Tratamento de longo prazo é pergunta aberta.) |
-| Campos da Step no Process | Nome e ordem copiados do template, estado (não iniciado / em andamento / concluído), timestamps, indicação de obrigatório sim/não. |
-| Campos da Task no Process | Nome e ordem copiados do template, estado (pendente / concluída / saltada), timestamps. |
-| Salto de tarefa | Uma tarefa pode ser saltada manualmente em runtime. Tarefa saltada permanece visível, marcada como "saltada". |
+| Avanço de etapa | Avanço é **automático**, não uma ação. Ao concluir (ou saltar) todas as Tasks obrigatórias de uma `ProcessStepInstance`, a Step é marcada como concluída e o Process passa automaticamente para a próxima Step na ordem. Não existe ação/endpoint explícito de "avançar etapa". Não existe salto de Step inteira — se o contador precisa pular trabalho, ele age no nível das Tasks. |
+| Critério de conclusão do Process | O Process é concluído automaticamente quando todas as `ProcessStepInstance` obrigatórias estão concluídas. Segue exatamente a mesma mecânica do avanço de etapa, aplicada ao nível do Process. |
+| Retenção de processos concluídos | Processos concluídos **permanecem armazenados permanentemente** e visíveis na coluna "concluído". Essa retenção é requisito **load-bearing**, não apenas uma escolha operacional: como o cliente-alvo é texto livre e não há entidade `Client`, os processos societários concluídos são a única memória estável da relação operacional entre a contabilidade e aquele cliente. Perder processos concluídos significa perder o histórico societário do cliente. (Como tratar a poluição visual do board ao longo do tempo continua sendo pergunta aberta — ver seção 9 —, mas qualquer tratamento futuro precisa preservar os dados.) |
+| Campos da `ProcessStepInstance` | Nome e ordem copiados do template, estado (não iniciado / em andamento / concluído), timestamps, indicação de obrigatório sim/não. |
+| Campos da `ProcessStepTaskInstance` | Nome e ordem copiados do template, estado (pendente / concluída / saltada), timestamps. |
+| Salto de tarefa | Uma `ProcessStepTaskInstance` pode ser saltada manualmente em runtime. Tarefa saltada permanece visível, marcada como "saltada", e conta como "resolvida" para fins de avanço automático da Step. |
 | Auditoria de tarefa | Registra quem e quando saltou ou concluiu a tarefa. Justificativa não é obrigatória. |
-| Campos (Fields) no Process | Definição copiada do template (label, tipo, obrigatório), valor preenchido e timestamp de preenchimento. |
+| `ProcessStepFieldInstance` (campos de etapa) | Materialização runtime dos StepFields do template. Definição copiada do template (label, tipo, obrigatório), valor preenchido e timestamp de preenchimento. |
+| `ProcessStepTaskFieldInstance` (campos de tarefa) | Materialização runtime dos TaskFields do template — campos configuráveis vinculados a uma Task específica. Mesma estrutura do `ProcessStepFieldInstance` (label, tipo, obrigatório, valor, timestamp), mas vinculado à `ProcessStepTaskInstance` em vez da `ProcessStepInstance`. |
 
 ---
 
@@ -216,9 +226,14 @@ que já suporta o WorkflowTemplate e a Accountancy.
 
 - **Poluição do kanban com processos concluídos.** Ao longo do tempo, a
   coluna "concluído" acumulará processos e pode poluir a visão
-  operacional. Como tratar esse acúmulo (ocultação temporal, arquivamento,
-  separação visual, filtro padrão) é um tópico a ser discutido entre
-  backend e frontend antes da implementação. Não decidir agora.
+  operacional. Como tratar esse acúmulo (ocultação temporal, separação
+  visual, filtro padrão, visão "histórico" separada do board ativo) é um
+  tópico a ser discutido entre backend e frontend antes da implementação.
+  **Restrição firme:** qualquer tratamento precisa ser puramente visual —
+  os processos concluídos não podem ser apagados, arquivados de forma
+  destrutiva ou movidos para fora do sistema, porque são a única memória
+  da relação com o cliente-alvo (ver decisão sobre retenção na seção 8).
+  Não decidir agora.
 
 - **Premissa dos ~70% de passos compartilhados entre tipos.** A hipótese
   de que os três fluxos (abertura, alteração, baixa) compartilham a maior
