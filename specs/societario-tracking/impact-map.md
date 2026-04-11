@@ -1,9 +1,14 @@
 # Mapa de Impacto — Rastreamento do Processo Societário
 
+> Status: ARQUIVADO POR TEMPO INDETERMINADO (desde 2026-04-11)
 > Feature: societario-tracking
 > Spec: specs/societario-tracking/spec.md
 > Contrato: specs/societario-tracking/integration.md (gerado após implementação do backend)
 > Data: 2026-04-07
+>
+> **Arquivamento:** a partir de 2026-04-11, a única task ativa é
+> `societario-workflow-process`. Este mapa de impacto não deve ser distribuído
+> para engenharia enquanto o arquivamento não for explicitamente revertido.
 
 ---
 

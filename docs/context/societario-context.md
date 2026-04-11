@@ -3,10 +3,10 @@
 ## O societário como núcleo do produto
 
 O societário é o núcleo do produto. Tudo na Societiza orbita em torno do fluxo
-de abertura de empresa. A visão do societário é um quadro kanban sem
+de processo societário. A visão do societário é um quadro kanban sem
 drag-and-drop no uso operacional do workflow, com colunas ordenadas que
 representam as etapas pelas quais um processo passa desde o início até a
-conclusão. Cada card no board representa uma abertura de empresa.
+conclusão. Cada card no board representa um processo societário.
 
 Do ponto de vista de experiência do usuário, o societário deve transmitir
 controle, previsibilidade e continuidade. O contador não deve sentir que está
@@ -37,7 +37,7 @@ execução real de um processo a partir dessa estrutura.
 **O WorkflowProcess ainda não está implementado, mas é peça central do MVP.**
 É a camada onde o usuário acompanhará e operará processos. O board será um
 kanban com colunas que representam as etapas do workflow. Cada card será um
-processo de abertura de empresa — uma instância criada a partir de uma versão
+processo societário — uma instância criada a partir de uma versão
 publicada de um WorkflowTemplate, contendo as instâncias das etapas e tarefas
 daquele template.
 

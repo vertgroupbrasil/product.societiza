@@ -1,7 +1,12 @@
 # Escritório e Planos
 
-> Status: aguardando aprovação
+> Status: ARQUIVADA POR TEMPO INDETERMINADO (desde 2026-04-11)
+> Status anterior: aguardando aprovação
 > Criado em: 2026-04-07
+>
+> **Arquivamento:** a partir de 2026-04-11, a única task ativa do repositório
+> é `societario-workflow-process`. Esta spec não deve ser aprovada nem avançar
+> no ciclo enquanto o arquivamento não for explicitamente revertido pelo humano.
 
 ---
 

@@ -1,5 +1,16 @@
 # Societiza — Mapa de Features e Integrações
 
+> **Estado de execução (desde 2026-04-11):** A única task ativa do repositório
+> de produto é `societario-workflow-process` (spec aprovada em 2026-04-11, ver
+> `specs/societario-workflow-process/spec.md`). Todas as demais features
+> listadas abaixo — inclusive `dashboard`, `notifications`, `portal-do-cliente`,
+> `importacao-exportacao`, `automacao`, `formulario-nativo`, `mcp-server`,
+> `alvarás` e `certificados` — estão ARQUIVADAS POR TEMPO INDETERMINADO. O
+> conteúdo deste mapa permanece como referência de visão, dependências e
+> acoplamento, mas nenhuma dessas features deve avançar para spec, impact-map
+> ou distribuição enquanto o arquivamento não for explicitamente revertido
+> pelo humano.
+
 Este documento descreve as features da plataforma, suas dependências, os dados que compartilham e os pontos de acoplamento críticos. É a referência principal para entender o que existe, o que está planejado para o MVP e o que vem depois.
 
 ---

@@ -1,5 +1,11 @@
 # Features Futuras Planejadas
 
+> **ARQUIVADO POR TEMPO INDETERMINADO (desde 2026-04-11).** A única task ativa
+> do repositório é `societario-workflow-process`. Todas as features abaixo
+> permanecem como visão futura documentada, mas não devem ser iniciadas,
+> detalhadas em spec, nem distribuídas enquanto o arquivamento não for
+> explicitamente revertido pelo humano.
+
 Todas as features abaixo são visão futura. Nenhuma está implementada.
 
 ---
