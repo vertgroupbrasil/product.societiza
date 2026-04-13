@@ -133,23 +133,21 @@ não está implementado — é a próxima peça central do MVP.
 
 ## 5. Próximas prioridades
 
-> **Estado de execução (desde 2026-04-11):** a única task ativa do repositório
-> é `societario-workflow-process` (spec aprovada em 2026-04-11). Todas as
-> demais frentes P1-P5 estão ARQUIVADAS POR TEMPO INDETERMINADO. O roadmap
-> abaixo permanece como visão de longo prazo.
+> O status de cada feature é controlado pelo frontmatter da respectiva spec
+> em `specs/[domínio]-[conceito]/spec.md`. O roadmap abaixo é a visão de
+> longo prazo.
 
 O roadmap segue uma lógica de fora para dentro: primeiro consolidar o núcleo
 operacional, depois ampliar leitura e acompanhamento, depois reduzir fricção de
 entrada, e por fim expandir o produto para além da abertura de empresa.
 
-| Prioridade | Feature | Status |
-|---|---|---|
-| **Ativa** | **societario-workflow-process** | **Única task ativa — spec aprovada em 2026-04-11** |
-| P1 | Fortalecer o societário (demais frentes) | Arquivado por tempo indeterminado |
-| P2 | Dashboard operacional | Arquivado por tempo indeterminado |
-| P3 | Notificações e acompanhamento | Arquivado por tempo indeterminado |
-| P4 | Automação, importação e IA | Arquivado por tempo indeterminado |
-| P5 | Álvarás, certificados e vida regulatória | Arquivado por tempo indeterminado |
+| Prioridade | Feature |
+|---|---|
+| P1 | Fortalecer o societário |
+| P2 | Dashboard operacional |
+| P3 | Notificações e acompanhamento |
+| P4 | Automação, importação e IA |
+| P5 | Álvarás, certificados e vida regulatória |
 
 **P1** cobre melhorias de qualidade, consistência e capacidade de configuração
 do societário e do workflow template — base para tudo que vem depois.

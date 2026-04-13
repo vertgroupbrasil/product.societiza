@@ -1,17 +1,11 @@
-# WorkflowProcess — Board operacional do societário
-
-> Domínio: societario
-> Status: aprovada
-> Criado em: 2026-04-11
-> Aprovado em: 2026-04-11
-
-> **TASK ATIVA ÚNICA.** A partir de 2026-04-11, esta é a única feature em
-> execução no repositório de produto. Todas as demais tasks e features estão
-> arquivadas por tempo indeterminado. Próximo artefato esperado após esta
-> aprovação: `impact-map.md` (gerado sob demanda, aguardando confirmação
-> explícita do humano antes de ser produzido — regra spec-first).
-
 ---
+status: approved
+domain: societario
+created_at: 2026-04-11
+approved_at: 2026-04-11
+---
+
+# WorkflowProcess — Board operacional do societário
 
 ## 1. Visão da feature
 

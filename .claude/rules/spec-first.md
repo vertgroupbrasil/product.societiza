@@ -24,13 +24,7 @@ Cada artefato tem um momento específico. Não antecipar nem pular etapas.
 - Salva em `specs/[domain]-[concept]/spec.md` — nomes em inglês
 - Exige aprovação humana explícita antes de avançar
 
-### 2. Impact map (`impact-map.md`) — imediatamente após aprovação da spec
-- Gerado pelo command `impact-map`
-- Salvo em `specs/[domain]-[concept]/impact-map.md` — nomes em inglês
-- Mapeia quais repos são afetados e o que cada um precisa fazer
-- Exige aprovação humana antes de distribuir para engenharia
-
-### 3. Integration doc (`integration.md`) — após o backend implementar
+### 2. Integration doc (`integration.md`) — após o backend implementar
 - Gerado pelo agente de produto lendo o código de `api.societiza` via MCP + cruzando com a spec aprovada
 - Salvo em `specs/[domain]-[concept]/integration.md` — nomes em inglês
 - Exige aprovação do backend (tech lead ou dev responsável) antes de ser considerado canônico
@@ -38,7 +32,7 @@ Cada artefato tem um momento específico. Não antecipar nem pular etapas.
 
 ## Razão
 
-A spec é o ponto de controle de qualidade das decisões de produto. O impact
-map distribui o trabalho. O integration doc fecha o ciclo documentando o que
-foi realmente construído. Cada artefato depende do anterior — pular etapas
-desalinha produto, backend e frontend.
+A spec é o ponto de controle de qualidade das decisões de produto. O
+integration doc fecha o ciclo documentando o que foi realmente construído.
+Cada artefato depende do anterior — pular etapas desalinha produto, backend
+e frontend.

@@ -42,19 +42,49 @@ feature. Se não conseguir, a spec está errada.
 
 # Template: Spec de Produto
 
+## Frontmatter obrigatório
+
+Toda spec deve começar com um bloco YAML frontmatter. Os campos obrigatórios são:
+
+```yaml
+---
+status: draft
+domain: societario
+created_at: 2026-04-11
+---
+```
+
+Adicionar `approved_at` somente quando o humano aprovar explicitamente:
+
+```yaml
+---
+status: approved
+domain: societario
+created_at: 2026-04-11
+approved_at: 2026-04-11
+---
+```
+
+**Valores possíveis de `status`:**
+
+| Status | Significado |
+|---|---|
+| `draft` | Spec em elaboração, ainda não aprovada |
+| `approved` | Spec aprovada pelo humano, pronta para implementação |
+| `in-progress` | Spec aprovada e com implementação em andamento |
+| `done` | Spec implementada com sucesso |
+| `archived` | Spec descartada, não deve ser implementada |
+
+**Valores possíveis de `domain`:** `societario`, `accountancy`, `dashboard`, `identity`
+
+O status `approved` só é atribuído após aprovação explícita do humano responsável.
+Nunca marcar como aprovada sem confirmação direta.
+
 ## Cabeçalho
 
 ```
 # [Nome legível da feature]
-
-> Domínio: [societario | accountancy | dashboard | identity]
-> Status: [rascunho | em revisão | aprovada]
-> Criado em: YYYY-MM-DD
-> Aprovado em: YYYY-MM-DD (preencher na aprovação)
 ```
-
-O status `aprovada` só é atribuído após aprovação explícita do humano responsável.
-Nunca marcar como aprovada sem confirmação direta.
 
 ---
 
@@ -234,7 +264,7 @@ Importante:
 - o escopo negativo deve ter ao menos um item relevante;
 - as decisões tomadas devem ser registradas como tabela;
 - as perguntas abertas devem ser honestas — não esconder incertezas;
-- o status inicial é sempre "rascunho" até aprovação explícita do humano.
+- o status inicial no frontmatter é sempre "draft" até aprovação explícita do humano.
 
 Leia antes de escrever:
 - docs/business-context.md

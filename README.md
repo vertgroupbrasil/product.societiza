@@ -22,9 +22,8 @@ Este repo resolve isso criando uma camada explícita de orquestração:
 - As decisões são documentadas aqui
 - A engenharia busca os insumos aqui
 
-Nenhuma feature é implementada sem uma spec aprovada. Nenhum repo recebe
-trabalho sem saber o impacto cross-repo. Nenhuma decisão de produto fica
-implícita em uma conversa.
+Nenhuma feature é implementada sem uma spec aprovada. Nenhuma decisão de
+produto fica implícita em uma conversa.
 
 ---
 
@@ -36,10 +35,10 @@ implícita em uma conversa.
 
 Os repos de execução não esperam que o produto vá até eles. A comunicação é
 estruturada via **agente + MCP do GitHub**: `api.societiza` e `web.societiza`
-buscam specs e mapas de impacto diretamente neste repositório. Quando uma
-feature é aprovada e o impacto é mapeado, os repos de execução têm acesso
-imediato aos artefatos — sem repassar contexto manualmente, sem sumarizar em
-PR descriptions o que já está documentado aqui.
+buscam specs diretamente neste repositório. Quando uma feature é aprovada,
+os repos de execução têm acesso imediato aos artefatos — sem repassar
+contexto manualmente, sem sumarizar em PR descriptions o que já está
+documentado aqui.
 
 Este repo é a fonte de verdade de produto para todo o ecossistema. Qualquer
 agente rodando em `api.societiza` ou `web.societiza` pode consultar o contexto
@@ -58,8 +57,7 @@ de produto aqui, sem depender de memória humana.
       SKILL.md             <- skill de planejamento de produto
       references/          <- materiais de referência da skill
   commands/
-    to-engineering.md      <- workflow completo: spec → impacto → distribuição
-    impact-map.md          <- mapeamento de impacto cross-repo
+    to-engineering.md      <- workflow completo: spec → distribuição
   rules/
     cross-repo.md          <- o que este repo faz e não faz
     spec-first.md          <- spec aprovada antes de qualquer implementação
@@ -82,12 +80,10 @@ docs/
 specs/
   [domínio]-[conceito]/    <- ex: societario-tracking/
     spec.md                <- spec de produto aprovada
-    impact-map.md          <- mapa de impacto cross-repo
     integration.md         <- contrato backend → frontend (gerado após implementação)
 
 templates/
   specification.md         <- modelo canônico de spec de produto
-  impact-map.md            <- modelo de mapa de impacto
   integration.md           <- modelo de contrato backend → frontend
 ```
 
@@ -214,14 +210,7 @@ O agente segue o command `to-engineering`:
 1. Verifica se já existe uma spec para a feature
 2. Se não existe, invoca `feature-design` para gerar
 3. Apresenta a spec ao humano — aguarda aprovação explícita
-4. Executa `impact-map` para mapear o que muda em cada repo
-5. Distribui: cada repo recebe o insumo correspondente
-
-### Mapear impacto cross-repo
-
-Ver `.claude/commands/impact-map.md`. Executado sempre antes de distribuir
-trabalho. Identifica módulos de backend afetados, features de frontend afetadas,
-breaking changes e ordem sugerida de implementação.
+4. Distribui: cada repo recebe o insumo correspondente
 
 ---
 
@@ -230,4 +219,4 @@ breaking changes e ordem sugerida de implementação.
 Toda sessão carrega as rules em `.claude/rules/` automaticamente:
 
 - **spec-first** — nenhuma feature é implementada sem spec aprovada
-- **cross-repo** — este repo produz specs e mapas de impacto, não código
+- **cross-repo** — este repo produz specs, não código

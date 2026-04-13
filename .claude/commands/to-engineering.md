@@ -14,9 +14,8 @@ foi tomada ou está prestes a ser e o humano quer o ciclo completo.
 
 ## Estrutura de specs
 
-Specs vivem em `specs/[domínio]-[conceito]/` com dois arquivos fixos:
+Specs vivem em `specs/[domínio]-[conceito]/` com um arquivo principal:
 - `spec.md` — spec de produto
-- `impact-map.md` — mapa de impacto cross-repo
 
 Domínios válidos: `societario`, `accountancy`, `dashboard`, `identity`.
 Conceito: máximo 2 palavras em kebab-case.
@@ -42,14 +41,11 @@ Exemplo: `specs/societario-tracking/spec.md`
 3. **GATE — Aprovação humana.** Apresentar a spec ao humano e aguardar
    aprovação explícita. Não avançar sem aprovação. Se o humano pedir mudanças,
    iterar na spec até aprovação.
-4. Executar `impact-map` para mapear impacto cross-repo e salvar em
-   `specs/{feature-name}/impact-map.md`
-5. Distribuir: indicar o que cada repo de execução recebe como insumo
+4. Distribuir: indicar o que cada repo de execução recebe como insumo
 
 ## Output esperado
 
 - Spec aprovada em `specs/{feature-name}/spec.md`
-- Mapa de impacto em `specs/{feature-name}/impact-map.md`
 
 ## Skills requeridas
 

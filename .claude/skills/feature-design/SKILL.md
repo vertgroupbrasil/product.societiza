@@ -103,9 +103,8 @@ O nome da pasta segue o formato `[domain]-[concept-in-up-to-2-words]`.
 **Estrutura:**
 - `[domain]` é sempre um dos domínios do produto: `societario`, `accountancy`, `dashboard`, `identity`
 - `[concept]` é o nome curto da feature, em kebab-case, máximo 2 palavras, em inglês
-- A pasta contém sempre dois arquivos com nomes fixos:
+- A pasta contém o arquivo principal:
   - `spec.md` — a spec de produto (baseada em `templates/specification.md`)
-  - `impact-map.md` — o mapa de impacto cross-repo (baseado em `templates/impact-map.md`)
 
 Exemplos corretos:
 ```

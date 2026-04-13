@@ -13,7 +13,6 @@ Escopo: orchestration
 
 - Produzir specs de feature em `specs/[domínio]-[conceito]/spec.md`
 - Referenciar repos de execução pelo nome (api.societiza, web.societiza)
-- Mapear impacto cross-repo antes de distribuir o trabalho
 
 ## Razão
 

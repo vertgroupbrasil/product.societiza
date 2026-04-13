@@ -1,15 +1,11 @@
-# Rastreamento do Processo Societário
-
-> Status: ARQUIVADA POR TEMPO INDETERMINADO (desde 2026-04-11)
-> Status anterior: aprovada
-> Criado em: 2026-04-07
->
-> **Arquivamento:** a partir de 2026-04-11, a única task ativa do repositório
-> é `societario-workflow-process`. Esta spec permanece aprovada historicamente,
-> mas não deve ser distribuída para engenharia nem avançar para impact-map
-> enquanto o arquivamento não for explicitamente revertido pelo humano.
-
 ---
+status: archived
+domain: societario
+created_at: 2026-04-07
+approved_at: 2026-04-07
+---
+
+# Rastreamento do Processo Societário
 
 ## 1. Visão da feature
 

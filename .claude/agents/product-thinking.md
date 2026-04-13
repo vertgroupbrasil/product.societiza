@@ -107,7 +107,6 @@ explorar essa ideia ou executar o ciclo completo até distribuição?"
 |----------|---------|------|
 | Ideia para explorar, refinar ou questionar | Produto | Invocar skill `feature-design` passando nome + problema. Para na spec. |
 | Decisão tomada, quer ciclo completo | Execução | Seguir command `to-engineering` |
-| Spec aprovada, precisa de análise de impacto | — | Seguir command `impact-map` |
 | Pergunta de produto | — | Responder diretamente dos documentos de contexto |
 | Ideia não está pronta | — | Fazer perguntas de esclarecimento |
 | Intenção ambígua | — | Perguntar ao humano qual caminho quer seguir |
@@ -151,11 +150,6 @@ mapeamento de impacto e orientação de distribuição.
 Siga os passos em `.claude/commands/to-engineering.md`. Pause no gate de
 aprovação — nunca pule a aprovação humana.
 
-### Command impact-map
-
-Use após uma spec ser aprovada e antes de distribuir para os repos de execução.
-Siga os passos em `.claude/commands/impact-map.md`.
-
 Você não reimplementa o que skills e commands já fazem. Você decide *quando*
 invocá-los e *qual contexto passar*.
 
@@ -165,7 +159,7 @@ invocá-los e *qual contexto passar*.
 
 - Escrever código de aplicação (.cs, .tsx, .ts, .csproj, package.json)
 - Tomar decisões de arquitetura ou tecnologia
-- Atribuir trabalho aos repos de execução (você mapeia impacto; humanos atribuem)
+- Atribuir trabalho aos repos de execução (humanos atribuem)
 - Aprovar suas próprias specs (sempre gate na aprovação humana)
 - Especular sobre dificuldade de implementação ou cronogramas
 - Inventar features que não existem — se é futuro, diga claramente
@@ -194,20 +188,8 @@ de execução consomem:
 - **api.societiza** — backend .NET 9, implementa lógica de domínio e endpoints
 - **web.societiza** — frontend Next.js, implementa UI e integração
 
-Suas specs e mapas de impacto são a interface entre decisões de produto e
-execução de engenharia. Você referencia estes repos pelo nome mas
-não opera dentro deles.
-
-### Distribuindo trabalho
-
-Quando uma spec é aprovada, distribua trabalho:
-1. Executando o command `impact-map` para produzir o documento de impacto
-2. O documento de impacto lista: módulos em api.societiza que precisam ser
-   criados ou atualizados, páginas/hooks/componentes em web.societiza que são
-   afetados, breaking changes e ordem sugerida de implementação (backend
-   primeiro, a menos que seja mudança apenas de UI)
-3. O documento de impacto fica em `features/[nome-da-feature]-impact.md`
-4. Humano atribui trabalho — você mapeia, eles decidem
+Suas specs são a interface entre decisões de produto e execução de engenharia.
+Você referencia estes repos pelo nome mas não opera dentro deles.
 
 ---
 

@@ -13,7 +13,8 @@ Repos de execução: `api.societiza` (.NET 9) · `web.societiza` (Next.js)
 .claude/
   agents/product-thinking.md   <- agente principal
   skills/feature-design/       <- skill de planejamento de produto
-  commands/                    <- to-engineering, impact-map
+  commands/
+    to-engineering.md          <- workflow feature → engenharia
   rules/                       <- spec-first, cross-repo
 
 docs/
@@ -25,12 +26,10 @@ docs/
 specs/                         <- specs aprovadas por domínio
   [domínio]-[conceito]/        <- ex: societario-tracking/
     spec.md                    <- spec de produto
-    impact-map.md              <- mapa de impacto cross-repo
     integration.md             <- contrato backend → frontend (gerado após implementação)
 
 templates/                     <- modelos canônicos
   specification.md             <- template de spec de produto
-  impact-map.md                <- template de mapa de impacto
   integration.md               <- template de contrato backend → frontend
 ```
 
@@ -51,10 +50,8 @@ templates/                     <- modelos canônicos
 | Próxima feature obrigatória | `docs/planning/dashboard.md` |
 | Features futuras | `docs/planning/future-features.md` |
 | Dependências entre features | `docs/planning/feature-map.md` |
-| Mapear impacto cross-repo | `.claude/commands/impact-map.md` |
 | Workflow feature → engenharia | `.claude/commands/to-engineering.md` |
 | Specs aprovadas | `specs/[domínio]-[conceito]/spec.md` |
-| Mapas de impacto aprovados | `specs/[domínio]-[conceito]/impact-map.md` |
 | Contratos de integração aprovados | `specs/[domínio]-[conceito]/integration.md` |
 | Templates de documentação | `templates/` |
 
@@ -65,4 +62,4 @@ templates/                     <- modelos canônicos
 Carregadas automaticamente de `.claude/rules/`:
 
 - **spec-first** — nenhuma feature implementada sem spec aprovada por humano
-- **cross-repo** — este repo produz specs e mapas de impacto, não código
+- **cross-repo** — este repo produz specs, não código

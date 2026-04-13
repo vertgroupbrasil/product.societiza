@@ -1,11 +1,5 @@
 # Dashboard — Próxima Feature Mandatória
 
-> **ARQUIVADO POR TEMPO INDETERMINADO (desde 2026-04-11).** A partir de
-> 2026-04-11, a única task ativa do repositório é `societario-workflow-process`.
-> O planejamento do dashboard permanece válido como visão de produto, mas não
-> deve ser iniciado, detalhado em spec nem distribuído enquanto o arquivamento
-> não for explicitamente revertido pelo humano.
-
 O dashboard ainda não existe como feature entregue. Ele é a próxima grande
 prioridade após as melhorias no societário.
 
