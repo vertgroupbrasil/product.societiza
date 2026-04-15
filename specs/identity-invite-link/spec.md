@@ -1,7 +1,8 @@
 ---
-status: draft
+status: approved
 domain: identity
 created_at: 2026-04-13
+approved_at: 2026-04-15
 ---
 
 # Fluxo Completo de Convites
