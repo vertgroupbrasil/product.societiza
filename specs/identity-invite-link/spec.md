@@ -72,18 +72,14 @@ O email continua sendo enviado — é o canal esperado nesse contexto formal. Ad
 ## 6. Como se conecta com o produto existente
 
 **Dependências obrigatórias:**
-- Módulo `identity` — esta spec modifica e expande o fluxo de convite existente. Os três cenários de convite são responsabilidade do módulo `identity`.
-- `AccountancyId` — o isolamento multi-tenant é preservado. Cada convite carrega a contabilidade de destino quando aplicável (cenários 2 e 3).
-- Módulo `accountancy` — o cenário 2 pressupõe que a contabilidade já foi criada. A criação da contabilidade e o convite do administrador são duas operações distintas, executadas em sequência pelo SystemAdmin.
-
-**Dependência implícita — remoção de membros:**
-Para fechar o ciclo de controle do link genérico de equipe, o AccountingAdmin precisa conseguir remover um funcionário caso não reconheça quem entrou pelo link. Hoje essa funcionalidade não existe na plataforma. Esta feature e a remoção de membros andam juntas.
+- O isolamento multi-tenant é preservado. Cada convite carrega a contabilidade de destino quando aplicável (cenários 2 e 3).
+- O cenário 2 pressupõe que a contabilidade já foi criada. A criação da contabilidade e o convite do administrador são duas operações distintas, executadas em sequência pelo SystemAdmin.
 
 **O que esta feature habilita:**
 - Suporte a usuários que atuam em múltiplas contabilidades: como um AccountingEmployee pode ser um contador autônomo prestando serviço para mais de um escritório, esta spec permite que o mesmo email seja convidado por diferentes contabilidades. A experiência de seleção de contabilidade ativa no login deve ser especificada separadamente.
 
 **Posição no produto:**
-Feature core do módulo `identity`. Pré-requisito para qualquer uso colaborativo real da plataforma. Não adiciona uma camada periférica — fortalece o núcleo.
+Feature core de acesso e colaboração. Pré-requisito para qualquer uso colaborativo real da plataforma. Não adiciona uma camada periférica — fortalece o núcleo.
 
 ---
 
@@ -91,7 +87,7 @@ Feature core do módulo `identity`. Pré-requisito para qualquer uso colaborativ
 
 **Não inclui** convite de AccountingAdmin pelo próprio AccountingAdmin. Cada contabilidade tem um único AccountingAdmin, criado pelo SystemAdmin no onboarding. Não há mecanismo para o AccountingAdmin promover outro usuário a administrador nem convidar outro administrador.
 
-**Não inclui** aprovação manual de entrada pelo link genérico. Quem usa o link da equipe entra automaticamente. O controle é exercido pela validade limitada de 7 dias do link, pela visibilidade dos membros na lista da equipe e pela futura capacidade de remover funcionários.
+**Não inclui** aprovação manual de entrada pelo link genérico. Quem usa o link da equipe entra automaticamente. O controle é exercido pela validade limitada de 7 dias do link e pela visibilidade dos membros na lista da equipe.
 
 **Não inclui** notificação em tempo real ao admin quando alguém entra pelo link. O admin acompanha as entradas vendo a lista de membros da contabilidade. Notificações ficam fora do escopo desta spec e do MVP.
 
@@ -132,7 +128,6 @@ Esta feature remove a dependência de provedor de email para o fluxo de convite 
 | Email já cadastrado em outra contabilidade | Permitido. Apresenta fluxo de login; após autenticar, o usuário é adicionado à nova contabilidade automaticamente. |
 | Múltiplas contabilidades por usuário | Permitido (caso de contador autônomo prestando serviço para múltiplos escritórios). |
 | Quem gerencia o link de equipe | Exclusivamente o AccountingAdmin da contabilidade. |
-| Remoção de membros | Dependência reconhecida. As duas features andam juntas. |
 
 ---
 
