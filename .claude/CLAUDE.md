@@ -13,6 +13,7 @@ Repos de execução: `api.societiza` (.NET 9) · `web.societiza` (Next.js)
 .claude/
   agents/product-thinking.md   <- agente principal
   skills/feature-design/       <- skill de planejamento de produto
+  skills/logic-design/         <- skill de lógica de negócio
   commands/
     to-engineering.md          <- workflow feature → engenharia
   rules/                       <- spec-first, cross-repo
@@ -26,10 +27,12 @@ docs/
 specs/                         <- specs aprovadas por domínio
   [domínio]-[conceito]/        <- ex: societario-tracking/
     spec.md                    <- spec de produto
+    logic.md                   <- lógica de negócio (gerado após aprovação da spec)
     integration.md             <- contrato backend → frontend (gerado após implementação)
 
 templates/                     <- modelos canônicos
   specification.md             <- template de spec de produto
+  logic.md                     <- template de lógica de negócio
   integration.md               <- template de contrato backend → frontend
 ```
 
@@ -41,6 +44,7 @@ templates/                     <- modelos canônicos
 |--------|---------|
 | Iniciar sessão de produto | `.claude/agents/product-thinking.md` |
 | Planejar nova feature | `.claude/skills/feature-design/SKILL.md` |
+| Detalhar lógica de negócio | `.claude/skills/logic-design/SKILL.md` |
 | Contexto geral do produto | `docs/business-context.md` |
 | Visão, ICP, valores | `docs/product/product-vision.md` |
 | Semântica de prioridades | `docs/product/product-priorities.md` |
@@ -52,6 +56,7 @@ templates/                     <- modelos canônicos
 | Dependências entre features | `docs/planning/feature-map.md` |
 | Workflow feature → engenharia | `.claude/commands/to-engineering.md` |
 | Specs aprovadas | `specs/[domínio]-[conceito]/spec.md` |
+| Lógica de negócio aprovada | `specs/[domínio]-[conceito]/logic.md` |
 | Contratos de integração aprovados | `specs/[domínio]-[conceito]/integration.md` |
 | Templates de documentação | `templates/` |
 

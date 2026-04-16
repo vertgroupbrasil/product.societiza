@@ -14,8 +14,10 @@ foi tomada ou está prestes a ser e o humano quer o ciclo completo.
 
 ## Estrutura de specs
 
-Specs vivem em `specs/[domínio]-[conceito]/` com um arquivo principal:
+Specs vivem em `specs/[domínio]-[conceito]/` com os seguintes arquivos:
 - `spec.md` — spec de produto
+- `logic.md` — lógica de negócio (gerado após aprovação da spec)
+- `integration.md` — contrato backend → frontend (gerado após implementação)
 
 Domínios válidos: `societario`, `accountancy`, `dashboard`, `identity`.
 Conceito: máximo 2 palavras em kebab-case.
@@ -38,15 +40,30 @@ Exemplo: `specs/societario-tracking/spec.md`
      `feature-name` e `problem-description`. A skill faz toda a leitura de
      contexto internamente.
 2. Spec gerada e salva em `specs/{feature-name}/spec.md`
-3. **GATE — Aprovação humana.** Apresentar a spec ao humano e aguardar
+3. **GATE — Aprovação humana da spec.** Apresentar a spec ao humano e aguardar
    aprovação explícita. Não avançar sem aprovação. Se o humano pedir mudanças,
    iterar na spec até aprovação.
-4. Distribuir: indicar o que cada repo de execução recebe como insumo
+4. Verificar se existe `specs/{feature-name}/logic.md`.
+   - **Se existe:** ler o arquivo e apresentar ao humano: "Encontrei um logic
+     doc existente para essa feature. Seguimos com ele?"
+     - Humano confirma → ir direto para o GATE de revisão (passo 5)
+     - Humano nega → invocar `logic-design` para gerar novo logic doc
+   - **Se não existe:** invocar a skill `logic-design` passando `feature-name`.
+     A skill lê a spec e os context docs internamente.
+5. **GATE — Revisão conjunta de FE + BE.** Apresentar o logic doc e aguardar
+   confirmação de que tech leads de frontend e backend revisaram e aprovaram.
+   Não avançar sem essa confirmação. Se houver pedidos de ajuste, iterar no
+   logic doc até aprovação.
+6. Distribuir: indicar o que cada repo de execução recebe como insumo.
+   Ambos recebem `spec.md` + `logic.md`. O `integration.md` será gerado
+   após o backend implementar.
 
 ## Output esperado
 
 - Spec aprovada em `specs/{feature-name}/spec.md`
+- Logic doc revisado em `specs/{feature-name}/logic.md`
 
 ## Skills requeridas
 
 - `.claude/skills/feature-design/SKILL.md`
+- `.claude/skills/logic-design/SKILL.md`

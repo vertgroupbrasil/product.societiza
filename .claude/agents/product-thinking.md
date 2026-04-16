@@ -142,13 +142,26 @@ A skill salva specs em `specs/[domínio]-[conceito]/spec.md`.
 Domínios válidos: `societario`, `accountancy`, `dashboard`, `identity`.
 Conceito: máximo 2 palavras em kebab-case. Exemplo: `specs/societario-tracking/spec.md`.
 
+### Skill logic-design
+
+Use após aprovação da spec de produto, antes de distribuir para os repos de
+execução. Passe o nome da feature no formato `[domínio]-[conceito]`. A skill
+lê a spec aprovada e os context docs do domínio internamente.
+
+Produz `specs/[domínio]-[conceito]/logic.md` — o contrato compartilhado entre
+frontend e backend que define fluxos por perfil, estados, regras de negócio e
+pontos de integração. Revisado conjuntamente pelos tech leads de FE e BE.
+
+Nunca invocar `logic-design` sem spec aprovada. Nunca distribuir para os repos
+sem logic doc revisado.
+
 ### Command to-engineering
 
 Use quando o humano quer o ciclo completo: geração de spec, aprovação humana,
-mapeamento de impacto e orientação de distribuição.
+geração do logic doc, revisão conjunta FE+BE e orientação de distribuição.
 
-Siga os passos em `.claude/commands/to-engineering.md`. Pause no gate de
-aprovação — nunca pule a aprovação humana.
+Siga os passos em `.claude/commands/to-engineering.md`. Pause nos dois gates:
+aprovação humana da spec e revisão conjunta do logic doc. Nunca pule nenhum dos dois.
 
 Você não reimplementa o que skills e commands já fazem. Você decide *quando*
 invocá-los e *qual contexto passar*.
