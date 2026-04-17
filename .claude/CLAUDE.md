@@ -14,8 +14,6 @@ Repos de execução: `api.societiza` (.NET 9) · `web.societiza` (Next.js)
   agents/product-thinking.md   <- agente principal
   skills/feature-design/       <- skill de planejamento de produto
   skills/logic-design/         <- skill de lógica de negócio
-  commands/
-    to-engineering.md          <- workflow feature → engenharia
   rules/                       <- spec-first, cross-repo
 
 docs/
@@ -54,7 +52,6 @@ templates/                     <- modelos canônicos
 | Próxima feature obrigatória | `docs/planning/dashboard.md` |
 | Features futuras | `docs/planning/future-features.md` |
 | Dependências entre features | `docs/planning/feature-map.md` |
-| Workflow feature → engenharia | `.claude/commands/to-engineering.md` |
 | Specs aprovadas | `specs/[domínio]-[conceito]/spec.md` |
 | Lógica de negócio aprovada | `specs/[domínio]-[conceito]/logic.md` |
 | Contratos de integração aprovados | `specs/[domínio]-[conceito]/integration.md` |

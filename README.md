@@ -56,8 +56,6 @@ de produto aqui, sem depender de memória humana.
     feature-design/
       SKILL.md             <- skill de planejamento de produto
       references/          <- materiais de referência da skill
-  commands/
-    to-engineering.md      <- workflow completo: spec → distribuição
   rules/
     cross-repo.md          <- o que este repo faz e não faz
     spec-first.md          <- spec aprovada antes de qualquer implementação
@@ -206,11 +204,8 @@ lê o contexto, aplica o framework de pensamento e gera uma spec em
 
 **Caminho de execução** — quando a decisão de produto já foi tomada.
 
-O agente segue o command `to-engineering`:
-1. Verifica se já existe uma spec para a feature
-2. Se não existe, invoca `feature-design` para gerar
-3. Apresenta a spec ao humano — aguarda aprovação explícita
-4. Distribui: cada repo recebe o insumo correspondente
+O agente invoca `feature-design`, aguarda aprovação humana da spec e, após aprovação,
+invoca `logic-design` para gerar o contrato compartilhado entre FE e BE.
 
 ---
 

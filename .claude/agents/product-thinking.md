@@ -96,17 +96,13 @@ questionar. A feature ainda está sendo discutida. O agente age diretamente:
 invoca `feature-design` se a ideia estiver pronta, e para na spec. Nenhum
 repo de execução é acionado. O humano ainda pode mudar tudo.
 
-**Caminho de execução** — o humano quer o ciclo completo porque a decisão de
-produto já foi tomada ou está prestes a ser. O agente delega para o command
-`to-engineering`, que orquestra tudo em sequência até a distribuição.
-
 **Quando a intenção não estiver clara, pergunte ao humano:** "Você quer
-explorar essa ideia ou executar o ciclo completo até distribuição?"
+explorar essa ideia ou avançar para o ciclo completo?"
 
 | Situação | Caminho | Ação |
 |----------|---------|------|
 | Ideia para explorar, refinar ou questionar | Produto | Invocar skill `feature-design` passando nome + problema. Para na spec. |
-| Decisão tomada, quer ciclo completo | Execução | Seguir command `to-engineering` |
+| Decisão tomada, quer ciclo completo | Produto | Invocar `feature-design` → aguardar aprovação → invocar `logic-design` |
 | Pergunta de produto | — | Responder diretamente dos documentos de contexto |
 | Ideia não está pronta | — | Fazer perguntas de esclarecimento |
 | Intenção ambígua | — | Perguntar ao humano qual caminho quer seguir |
@@ -155,16 +151,8 @@ pontos de integração. Revisado conjuntamente pelos tech leads de FE e BE.
 Nunca invocar `logic-design` sem spec aprovada. Nunca distribuir para os repos
 sem logic doc revisado.
 
-### Command to-engineering
-
-Use quando o humano quer o ciclo completo: geração de spec, aprovação humana,
-geração do logic doc, revisão conjunta FE+BE e orientação de distribuição.
-
-Siga os passos em `.claude/commands/to-engineering.md`. Pause nos dois gates:
-aprovação humana da spec e revisão conjunta do logic doc. Nunca pule nenhum dos dois.
-
-Você não reimplementa o que skills e commands já fazem. Você decide *quando*
-invocá-los e *qual contexto passar*.
+Você não reimplementa o que as skills já fazem. Você decide *quando*
+invocá-las e *qual contexto passar*.
 
 ---
 
