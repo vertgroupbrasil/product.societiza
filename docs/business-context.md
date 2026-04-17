@@ -28,8 +28,8 @@ para documentos detalhados dentro desta pasta (`docs/`).
 
 ## 1. O que é a Societiza
 
-A Societiza nasceu para mudar a maneira como o Brasil abre empresas. Hoje, a 
-operação societária das contabilidades é extremamente fragmentada. Os dados de
+A Societiza nasceu para mudar a maneira como o Brasil conduz processos societários.
+Hoje, a operação societária das contabilidades é extremamente fragmentada. Os dados de
 um mesmo processo ficam despejados em planilhas, sites de prefeitura, portais de 
 viabilidade, documentos espalhados, conversas no WhatsApp e em outros softwares 
 que não compartilham contexto entre si. Isso gera retrabalho, perda de informação, 
@@ -38,16 +38,18 @@ de escalar a operação com qualidade.
 
 A Societiza existe para centralizar essa operação e reduzir a burocracia
 percebida pelo contador. O objetivo não é apenas organizar tarefas.
-O objetivo é transformar a abertura de empresas em uma operação estruturada, 
-clara, configurável, colaborativa e progressivamente automatizável.
+O objetivo é transformar processos societários — abertura, alteração contratual e baixa
+— em uma operação estruturada, clara, configurável, colaborativa e progressivamente
+automatizável.
 
-A plataforma deve concentrar toda a regra de negócio da abertura de empresas:
-desde a proposta ao cliente, coleta dos dados iniciais, execução operacional, 
-acompanhamento do andamento, notificações, documentos, pendências e conclusão 
-da abertura.
+A plataforma deve concentrar toda a regra de negócio do societário: desde a proposta
+ao cliente, coleta dos dados iniciais, execução operacional, acompanhamento do
+andamento, notificações, documentos, pendências e conclusão do processo. O fluxo é
+único por design — cada tipo de processo usa o mesmo board, com etapas e tarefas
+marcadas como aplicáveis ou não aplicáveis conforme o contexto.
 
-A visão é se tornar o sistema operacional da abertura de empresas no Brasil 
-para contabilidades. A missão é descomplicar a vida do contador.
+A visão é ser a referência societária brasileira — o sistema operacional do contador.
+A missão é descomplicar a vida do contador.
 
 > Detalhes completos: [`product/product-vision.md`](product/product-vision.md)
 
@@ -74,11 +76,9 @@ com sua própria equipe, seus próprios dados e seu próprio ambiente de trabalh
 O acesso é inteiramente controlado por convite, com perfis de permissão
 distintos definidos no momento do convite.
 
-O multi-tenancy é organizado por Accountancy: cada contabilidade tem sua própria
-instância de dados, processos, templates e membros de equipe. O aggregate
-`Accountancy` é o discriminante central dessa separação — identificado por
-`accountancyId` nos agregados `User`, `UserInvite` e `WorkflowTemplate`, e em
-suas projeções e eventos correspondentes.
+O multi-tenancy é organizado por contabilidade: cada escritório tem sua própria
+instância de dados, processos, templates e membros de equipe. Os dados de uma
+contabilidade nunca são visíveis por outra.
 
 A plataforma opera com três perfis de usuário distintos, com escopos de acesso
 bem delimitados:
@@ -100,9 +100,9 @@ bem delimitados:
 
 ### Accountancy
 
-A Accountancy é a unidade organizacional multi-tenant da Societiza. Cada
-contabilidade tem sua própria instância de dados, membros e templates. O
-discriminante é `accountancyId`.
+A Accountancy é a unidade organizacional da Societiza. Cada contabilidade
+opera com sua própria instância de dados, membros e templates — completamente
+isolada das demais.
 
 > Detalhes completos: [`context/accountancy-context.md`](context/accountancy-context.md)
 
@@ -110,11 +110,12 @@ discriminante é `accountancyId`.
 
 O módulo Identity cobre autenticação e convites.
 
-**Convites:** InviteUser, AcceptInvite, RevokeInvite, ResendInvite +
-ExpireInvitesJob (expira convites após 72h) + SendInviteEmail.
+**Convites:** um administrador convida membros por e-mail. O convidado aceita,
+tem sua conta criada e passa a integrar a equipe. Convites podem ser revogados
+ou reenviados. Convites não aceitos expiram automaticamente após 72 horas.
 
-**Autenticação:** Login, Logout, Refresh, ForgotPassword, ResetPassword +
-SendPasswordResetEmail. Endpoints ainda sem middleware de proteção aplicado.
+**Autenticação:** login com e-mail e senha, logout, recuperação e redefinição
+de senha.
 
 > Detalhes completos: [`context/identity-context.md`](context/identity-context.md)
 
@@ -139,7 +140,7 @@ não está implementado — é a próxima peça central do MVP.
 
 O roadmap segue uma lógica de fora para dentro: primeiro consolidar o núcleo
 operacional, depois ampliar leitura e acompanhamento, depois reduzir fricção de
-entrada, e por fim expandir o produto para além da abertura de empresa.
+entrada, e por fim expandir o produto para a continuidade regulatória do cliente.
 
 | Prioridade | Feature |
 |---|---|
@@ -163,7 +164,7 @@ operacionais.
 **P4** reduz a fricção de entrada e aumenta automação: importação de processos,
 exportação, automação de tarefas repetitivas e MCP Server para IA assistiva.
 
-**P5** expande o produto da abertura de empresa para a continuidade regulatória
+**P5** expande o produto do societário para a continuidade regulatória
 do cliente: controle de álvarás, certificados digitais em nuvem e portal do
 cliente.
 
@@ -211,15 +212,6 @@ ou ficar fora do ar. Isso impacta diretamente futuras automações e deve ser
 considerado nas decisões de produto, engenharia e operação. Qualquer feature
 de automação precisa ser projetada assumindo que o sistema externo pode falhar,
 e o usuário precisa de visibilidade sobre o status dessas automações.
-
-### Endpoints desprotegidos e contratos técnicos desalinhados `Bloqueante MVP`
-
-Algumas histórias do produto já estão claras, mas o backend atual ainda não
-implementa ou não expõe exatamente esses contratos da forma esperada. O caso
-da autenticação é o exemplo mais importante. Isso significa que planejamento
-estratégico e planejamento técnico precisam sempre explicitar o que já existe
-de verdade, o que é comportamento esperado de produto, e o que ainda precisa
-ser alinhado entre frontend, backend e infra.
 
 ### Versionamento de templates `Risco`
 

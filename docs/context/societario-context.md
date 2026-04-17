@@ -15,9 +15,9 @@ da contabilidade em um único lugar. O board precisa mostrar rapidamente o
 estado de cada processo, os responsáveis, as pendências e os gargalos.
 
 O societário se conecta diretamente com o workflow template (que define as
-etapas e tarefas), com a Accountancy ativa (que identifica a qual contabilidade
-o processo pertence via `accountancyId`), e será a fonte primária de dados para
-o dashboard e para futuras features de notificação.
+etapas e tarefas), com a Accountancy ativa (que determina a qual contabilidade
+o processo pertence), e será a fonte primária de dados para o dashboard e para
+futuras features de notificação.
 
 **Estado atual:** O WorkflowTemplate está implementado e é a base da feature.
 O WorkflowProcess — a camada de execução que entrega o board kanban com cards
@@ -107,9 +107,8 @@ decisão explícita.
 ### Contexto de Accountancy no societário
 
 A Accountancy ativa é o contexto que delimita o que o usuário vê e cria no
-societário. Todos os processos e templates do board pertencem à Accountancy
-ativa via `accountancyId`. O discriminante para filtros e criação de recursos
-é sempre `accountancyId` — nunca uma cota global entre contabilidades distintas.
+societário. Todos os processos e templates do board pertencem à contabilidade
+ativa. Nenhum recurso de uma contabilidade é visível ou acessível por outra.
 
 ---
 

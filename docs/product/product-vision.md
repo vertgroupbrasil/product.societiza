@@ -2,8 +2,8 @@
 
 ## O que é a Societiza
 
-A Societiza nasceu para mudar a maneira como o Brasil abre empresas. Hoje, a
-operação societária das contabilidades é extremamente fragmentada. Os dados de
+A Societiza nasceu para mudar a maneira como o Brasil conduz processos societários.
+Hoje, a operação societária das contabilidades é extremamente fragmentada. Os dados de
 um mesmo processo ficam despejados em planilhas, sites de prefeitura, portais
 de viabilidade, documentos espalhados, conversas no WhatsApp e em outros
 softwares que não compartilham contexto entre si. Isso gera retrabalho, perda
@@ -12,22 +12,24 @@ humana e baixa capacidade de escalar a operação com qualidade.
 
 A Societiza existe para centralizar essa operação e reduzir a burocracia
 percebida pelo contador. O objetivo não é apenas organizar tarefas. O objetivo
-é transformar a abertura de empresas em uma operação estruturada, clara,
-configurável, colaborativa e progressivamente automatizável.
+é transformar processos societários — abertura, alteração contratual e baixa —
+em uma operação estruturada, clara, configurável, colaborativa e progressivamente
+automatizável.
 
-A plataforma deve concentrar toda a regra de negócio da abertura de empresas:
-desde a proposta ao cliente, coleta dos dados iniciais, execução operacional,
+A plataforma deve concentrar toda a regra de negócio do societário: desde a
+proposta ao cliente, coleta dos dados iniciais, execução operacional,
 acompanhamento do andamento, notificações, documentos, pendências e conclusão
-da abertura.
+do processo. O fluxo é único por design — cada tipo de processo usa o mesmo board,
+com etapas e tarefas marcadas como aplicáveis ou não aplicáveis conforme o contexto.
 
 ---
 
 ## Visão, missão e valores
 
-A visão da Societiza é se tornar o sistema operacional da abertura de empresas
-no Brasil para contabilidades. A plataforma não deve ser vista como um conjunto
-de telas soltas, nem como apenas um kanban. Ela deve ser a camada central da
-operação societária.
+A visão da Societiza é ser a referência societária brasileira — o sistema
+operacional do contador. A plataforma não deve ser vista como um conjunto de
+telas soltas, nem como apenas um kanban. Ela deve ser a camada central da
+operação societária — de ponta a ponta, para qualquer tipo de processo.
 
 A missão é descomplicar a vida do contador. Isso significa reduzir burocracia,
 reduzir caos operacional, reduzir dependência de controles improvisados e dar

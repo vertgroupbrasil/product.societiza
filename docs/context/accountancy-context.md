@@ -8,9 +8,9 @@
 ## O que é uma Accountancy
 
 A Accountancy é a unidade organizacional que representa um escritório de
-contabilidade dentro da Societiza. É o contorno multi-tenant do sistema —
-todos os processos, templates e configurações de equipe pertencem a uma
-Accountancy específica, identificada por `accountancyId`.
+contabilidade dentro da Societiza. É o contorno de isolamento do sistema —
+todos os processos, templates e configurações de equipe pertencem a um
+escritório específico e são visíveis apenas por ele.
 
 Cada Accountancy tem uma identidade que espelha o escritório de contabilidade
 no mundo físico:
@@ -37,13 +37,13 @@ configurada — ele não cria nem configura a Accountancy diretamente.
 
 ## Papel no sistema
 
-`accountancyId` é o discriminante central de toda separação de dados na
-plataforma. Está presente em todo processo, template, convite e filtro.
-Nenhum dado de uma Accountancy vaza para outra.
+A Accountancy é o contorno de isolamento de todos os dados da plataforma.
+Nenhum dado de uma contabilidade é visível por outra — processos, templates,
+convites e membros pertencem exclusivamente ao seu escritório.
 
 O societário opera sempre dentro do contexto de uma Accountancy ativa: os
 processos visíveis no board, os templates disponíveis e os membros da equipe
-são todos scoped ao `accountancyId` da sessão.
+pertencem à contabilidade da sessão.
 
 ---
 
