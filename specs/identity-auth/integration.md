@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 spec: identity-auth
 domain: identity
 created_at: 2026-04-20
@@ -14,7 +14,7 @@ updated_at: 2026-04-20
 - **Módulo backend responsável**: `Identity` (`src/Modules/Identity/*`, endpoints em `src/Web/Endpoints/Modules/Identity/Auth/`)
 - **Status atual**: `existente`
 - **Data da última atualização**: 2026-04-20
-- **Responsável técnico**: Victor Kunz (victor.kunz@vertgroup.com.br)
+- **Responsável técnico**: Gabriel Carvalho
 
 Os cinco fluxos estão implementados e expostos em `/api/v1/identity/auth/*`. A feature é a camada fundacional do produto — toda rota protegida da plataforma depende dela.
 
