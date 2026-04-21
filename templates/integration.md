@@ -312,4 +312,3 @@ Esta seção é obrigatória porque a pior documentação para o frontend é a q
 parece completa, mas esconde incerteza.
 
 ---
-

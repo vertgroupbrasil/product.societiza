@@ -1,5 +1,5 @@
 ---
-status: aprovado
+status: approved
 spec: identity-invitation-links
 created_at: 2026-04-17
 approved_at: 2026-04-17

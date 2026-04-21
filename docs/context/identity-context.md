@@ -24,9 +24,19 @@ de 72 horas expiram automaticamente.
 
 ### Autenticação
 
-O usuário acessa a plataforma com e-mail e senha. A sessão é mantida de forma
-segura e pode ser encerrada explicitamente. Caso esqueça a senha, o usuário
-pode solicitar um link de redefinição por e-mail.
+O usuário acessa a plataforma com e-mail e senha. A sessão é mantida
+automaticamente em segundo plano — o usuário não precisa fazer login a cada
+visita. O logout encerra a sessão imediatamente; não é possível continuar
+usando a plataforma com uma sessão encerrada.
+
+Alterar ou redefinir a senha desconecta o usuário de todos os dispositivos
+automaticamente.
+
+Caso esqueça a senha, o usuário pode solicitar um link de redefinição por
+e-mail. O link expira em 1 hora; após esse prazo, um novo link precisa ser
+solicitado. O formulário sempre confirma o envio independente de o e-mail
+existir na plataforma, evitando que terceiros usem o formulário para descobrir
+quais e-mails estão cadastrados.
 
 ---
 
