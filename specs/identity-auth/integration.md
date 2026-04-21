@@ -3,6 +3,7 @@ status: draft
 spec: identity-auth
 domain: identity
 created_at: 2026-04-20
+updated_at: 2026-04-20
 ---
 
 # Autenticação — Contrato de Integração Backend → Frontend
@@ -25,7 +26,7 @@ Autenticação é o portão de entrada da Societiza. Depois que uma pessoa cria 
 
 Do ponto de vista do usuário, a experiência é quase invisível quando funciona. Ele entra uma vez com e-mail e senha e, a partir dali, o sistema mantém a sessão viva em segundo plano via rotação automática do refresh token — sem redirects para login no meio de um processo, sem reautenticação entre abas. Quando quer sair, clica em sair e a sessão é encerrada imediatamente. Quando esquece a senha, pede um link, recebe por e-mail, cria uma nova senha e volta a operar.
 
-A feature serve todos os três perfis da plataforma (`SystemAdmin`, `AccountingAdmin`, `AccountingEmployee`) com comportamento idêntico — o que distingue perfis é a autorização *depois* do login, carregada pelas claims do access token. Ela entra em **todo acesso à plataforma depois do cadastro inicial** e é pré-requisito de todas as features protegidas (societário, convites, dashboard futuro, notificações).
+A feature serve todos os três perfis da plataforma (`SystemAdmin`, `AccountancyAdmin`, `AccountancyEmployee`) com comportamento idêntico — o que distingue perfis é a autorização *depois* do login, carregada pelas claims do access token. Ela entra em **todo acesso à plataforma depois do cadastro inicial** e é pré-requisito de todas as features protegidas (societário, convites, dashboard futuro, notificações).
 
 ---
 
@@ -78,10 +79,10 @@ O usuário percebe a autenticação como um utilitário silencioso: entra uma ve
 **Sucesso** = `200 OK` com `accessToken` no corpo + cookie `refresh_token` renovado (login, refresh) ou apenas `200 OK` com cookie limpo (logout, reset, forgot).
 
 **Erro funcional:**
-- Credencial inválida no login → `401 Unauthorized`, `Auth.InvalidCredentials`, mensagem `Invalid email or password` (idêntica para "e-mail inexistente" e "senha errada" — anti-enumeração).
+- Credencial inválida no login → `400 Bad Request`, `Auth.InvalidCredentials`, mensagem `Invalid email or password` (idêntica para "e-mail inexistente" e "senha errada" — anti-enumeração).
 - Refresh token ausente, inválido, expirado ou já consumido → `400 Bad Request`, `Auth.InvalidToken`, mensagem `Refresh token is invalid or expired`.
 - Reset token inválido/expirado/usado → `404 Not Found`, `Auth.InvalidToken`, mensagem `Password reset token is invalid or expired`.
-- Erro de validação de campo (e-mail malformado, senha < 8 caracteres, confirmação não bate) → `400 Bad Request` via `ValidationException`.
+- Erro de validação de campo → `400 Bad Request` via `ValidationException`.
 
 **Estados relevantes** (observáveis nas projeções MongoDB):
 - Refresh token: `ativo` (não revogado, não expirado) → `revogado` (logout, reset, rotação por refresh) ou `expirado` (7 dias).
@@ -144,7 +145,7 @@ Rotas reais vivem sob `UsePathBase("/api")` + `/v1/identity/auth/...`.
 
 Corpo (`LoginRequest`):
 - `email`: `string`, obrigatório, formato de e-mail válido. Validado em `LoginValidator`.
-- `password`: `string`, obrigatório, não-vazio. Não há exigência de tamanho mínimo no login (a validação de 8 caracteres só aplica em `ResetPassword`).
+- `password`: `string`, obrigatório, não-vazio. Não há exigência de tamanho mínimo no login (a validação de complexidade só aplica em `RegisterUser` e `ResetPassword`).
 
 Transformações obrigatórias no frontend:
 - Nenhuma. Campos são strings planas.
@@ -193,7 +194,7 @@ Validações relevantes:
 
 Corpo (`ResetPasswordRequest`):
 - `token`: `string`, obrigatório. É o `rawToken` gerado no forgot (`Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))`). O frontend extrai do query string `?token=` do link do e-mail.
-- `newPassword`: `string`, obrigatório, mínimo 8 caracteres. **A spec/endpoint mencionam** "ao menos uma letra maiúscula, minúscula e um dígito", mas a regra não está no `ResetPasswordValidator` — ver gap em §16.
+- `newPassword`: `string`, obrigatório. Requisitos mínimos implementados no `ResetPasswordValidator`: mínimo 8 caracteres, máximo 100 caracteres, ao menos uma letra maiúscula, ao menos uma letra minúscula, ao menos um dígito.
 - `confirmPassword`: `string`, obrigatório, deve ser igual a `newPassword`.
 
 Transformações obrigatórias no frontend:
@@ -210,7 +211,7 @@ Validações relevantes:
 ### Response — Login (`200 OK`)
 
 Corpo (objeto anônimo montado no endpoint — **não** é o `LoginResponse` bruto):
-- `accessToken`: `string` — JWT assinado HS256. Claims: `sub` (userId, Guid), `email`, `role` (`SystemAdmin` | `AccountingAdmin` | `AccountingEmployee`), `security_stamp` (Guid), `accountancy_id` (Guid, **omitido para SystemAdmin**). Expiração: 15 minutos.
+- `accessToken`: `string` — JWT assinado HS256. Claims: `sub` (userId, Guid), `email`, `role` (`SystemAdmin` | `AccountancyAdmin` | `AccountancyEmployee`), `security_stamp` (Guid), `accountancy_id` (Guid, **omitido para SystemAdmin**). Expiração: 15 minutos.
 
 Cookie (side-effect):
 - `refresh_token`: JWT assinado HS256, claims `sub` + `jti`, expiração 7 dias. HttpOnly, Secure, SameSite=Strict. O frontend **não** deve tentar ler.
@@ -251,7 +252,7 @@ Envelope `ProblemDetails` (gerado por `EndpointBaseExtensions.HandleFailure`):
 ### 8.2. Nullabilidade e ausência de campo
 
 - `accountancy_id` no access token é **omitido** (claim não incluída) para usuários `SystemAdmin`. Não vem como `null` — vem ausente. O frontend precisa tratar `undefined`/chave ausente, não `null`.
-- `role` é sempre presente (string enum: `SystemAdmin` | `AccountingAdmin` | `AccountingEmployee`).
+- `role` é sempre presente (string enum: `SystemAdmin` | `AccountancyAdmin` | `AccountancyEmployee`).
 - Em erros, `errors` só aparece em erro de validação FluentValidation — pode ser `null`/ausente nos demais.
 
 ---
@@ -303,14 +304,14 @@ Não aplicável — nenhuma listagem é exposta por esta feature. Operações s�
 
 | Situação | Quando acontece | Código HTTP | `type` | Comportamento esperado no frontend |
 |---|---|---|---|---|
-| E-mail ou senha errados no login | `POST /login` com credenciais que não batem | `401 Unauthorized` | `Auth.InvalidCredentials` | Exibir mensagem genérica: "E-mail ou senha inválidos." Não distinguir se o e-mail existe. |
+| E-mail ou senha errados no login | `POST /login` com credenciais que não batem | `400 Bad Request` | `Auth.InvalidCredentials` | Exibir mensagem genérica: "E-mail ou senha inválidos." Não distinguir se o e-mail existe. |
 | E-mail malformado no login/forgot | `email` vazio ou formato inválido | `400 Bad Request` | `Validation.Error` | Marcar o campo no formulário; usar `errors[]` se necessário para mensagem inline. |
 | Senha vazia no login | `password` vazio | `400 Bad Request` | `Validation.Error` | Marcar o campo; inline. |
 | Refresh token ausente (cookie não enviado) | `POST /refresh` sem cookie | `400 Bad Request` | `Validation.Error` (via `RefreshValidator`) | Redirecionar imediatamente para login. |
 | Refresh token inválido/expirado/revogado | `POST /refresh` ou `POST /logout` com cookie que falha na validação JWT, ou não existe no aggregate, ou `IsRevoked=true`, ou `ExpiresAt <= UtcNow` | `400 Bad Request` | `Auth.InvalidToken` | Encerrar sessão no cliente e redirecionar para login. |
 | Access token ausente/inválido em rota protegida (ex: logout) | `[Authorize]` falha | `401 Unauthorized` | — (pipeline do ASP.NET, sem `ProblemDetails` customizado) | Disparar refresh; se refresh falhar, redirecionar para login. |
 | Reset token inválido/expirado/já usado | `POST /reset-password` | `404 Not Found` | `Auth.InvalidToken` | Mensagem: "Link inválido ou expirado." + CTA para `forgot-password` novamente. |
-| Nova senha < 8 caracteres | `POST /reset-password` | `400 Bad Request` | `Validation.Error` | Marcar o campo; exibir regra mínima. |
+| Nova senha < 8 caracteres ou sem complexidade | `POST /reset-password` ou `POST /invitation-link/register` | `400 Bad Request` | `Validation.Error` | Marcar o campo; exibir as regras: mínimo 8 caracteres, ao menos uma maiúscula, uma minúscula e um dígito. |
 | Confirmação de senha não bate | `POST /reset-password` | `400 Bad Request` | `Validation.Error` | Marcar os dois campos; mensagem inline. |
 | Forgot com e-mail inexistente | `POST /forgot-password` | `200 OK` | — | **Exibir mensagem de sucesso genérica** mesmo quando o e-mail não existe. Nunca expor "e-mail não cadastrado." |
 
@@ -331,12 +332,9 @@ Detalhe importante sobre o fluxo de renovação: o `RefreshHandler` retorna `400
 Claims do access token entregues ao frontend (decodificáveis para uso de UI, **não** para validação de segurança):
 - `sub` — `userId` (Guid).
 - `email` — string.
-- `role` — `"SystemAdmin"` | `"AccountingAdmin"` | `"AccountingEmployee"` (valores do `UserRole` SmartEnum).
+- `role` — `"SystemAdmin"` | `"AccountancyAdmin"` | `"AccountancyEmployee"` (valores do `UserRole` SmartEnum).
 - `security_stamp` — Guid; regenerado a cada refresh e a cada reset de senha.
 - `accountancy_id` — Guid; **omitido para SystemAdmin**.
-
-Gap de autenticação identificado:
-- O código usa os valores `AccountingAdmin` e `AccountingEmployee`. A spec e o logic.md referem-se a `AccountancyAdmin` e `AccountancyEmployee`. Ver §16.
 
 ---
 
@@ -351,7 +349,7 @@ Gap de autenticação identificado:
 - **Forgot password sempre retorna sucesso.** Use mensagem única: "Se o e-mail existir, você receberá um link em breve." Nunca "E-mail não encontrado."
 - **Link de reset aponta para `{FrontendOptions.BaseUrl}/auth/reset-password?token={rawToken}`.** Frontend precisa ter a rota `/auth/reset-password` que leia o `token` do query string e envie ao endpoint.
 - **Login não retorna dados do usuário (nome, role, accountancyId) no corpo.** Essas informações estão **apenas nas claims do access token**. O frontend decodifica o JWT (sem validar assinatura localmente) para popular contexto de usuário, **ou** faz uma chamada separada `GET /me` (que **não existe atualmente** — ver §16).
-- **Redirect pós-login** é decisão do frontend baseada na claim `role`: `SystemAdmin` → área geral; `AccountingAdmin`/`AccountingEmployee` → área da contabilidade (usando `accountancy_id` da claim).
+- **Redirect pós-login** é decisão do frontend baseada na claim `role`: `SystemAdmin` → área geral; `AccountancyAdmin`/`AccountancyEmployee` → área da contabilidade (usando `accountancy_id` da claim).
 - Após reset bem-sucedido, **não há autologin** — frontend deve redirecionar para a tela de login com mensagem de sucesso.
 - Forgot password é assíncrono no envio do e-mail, mas a resposta HTTP é síncrona em ~instantânea. O frontend não precisa aguardar delivery confirmation — apenas exibir sucesso.
 
@@ -381,7 +379,6 @@ UI otimista: não aplicável. Login, logout, refresh e reset são ações que **
 - Quebras futuras previsíveis:
   - Adição de MFA pode introduzir um estado intermediário `pending_mfa` entre login-com-credenciais e sessão ativa, alterando o contrato de `POST /login`.
   - Inclusão de Google OAuth pode adicionar um novo endpoint sem quebrar o existente.
-  - Correção dos nomes `AccountingAdmin` → `AccountancyAdmin` quebra clientes que leem a claim `role` — ver §16.
 
 ---
 
@@ -407,7 +404,7 @@ UI otimista: não aplicável. Login, logout, refresh e reset são ações que **
 
 // Response válida — Login (200 OK)
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4M2U4Y2YxYi00ZjIxLTQ1OGUtOGRiMC1iNzkwZmEzY2Q1YTciLCJlbWFpbCI6InZpY3Rvci5rdW56QHZlcnRncm91cC5jb20uYnIiLCJyb2xlIjoiQWNjb3VudGluZ0FkbWluIiwic2VjdXJpdHlfc3RhbXAiOiI5MTU5NjY4Yy05OTJjLTRkYzUtYjI1NS0zMDI0ZTBmZjEyNmQiLCJhY2NvdW50YW5jeV9pZCI6ImE0NmU0NGI4LTJjZGMtNDM5ZC04NjBjLWQ1ZDRhZDU3OGY0MiIsImV4cCI6MTc3NzY1ODkwMCwiaXNzIjoic29jaWV0aXphLWFwaSIsImF1ZCI6InNvY2lldGl6YS13ZWIifQ.signature"
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4M2U4Y2YxYi00ZjIxLTQ1OGUtOGRiMC1iNzkwZmEzY2Q1YTciLCJlbWFpbCI6InZpY3Rvci5rdW56QHZlcnRncm91cC5jb20uYnIiLCJyb2xlIjoiQWNjb3VudGFuY3lBZG1pbiIsInNlY3VyaXR5X3N0YW1wIjoiOTE1OTY2OGMtOTkyYy00ZGM1LWIyNTUtMzAyNGUwZmYxMjZkIiwiYWNjb3VudGFuY3lfaWQiOiJhNDZlNDRiOC0yY2RjLTQzOWQtODYwYy1kNWQ0YWQ1NzhmNDIiLCJleHAiOjE3Nzc2NTg5MDAuImlzcyI6InNvY2lldGl6YS1hcGkiLCJhdWQiOiJzb2NpZXRpemEtd2ViIn0.signature"
 }
 // + Set-Cookie: refresh_token=eyJhbGciOiJIUzI1NiIs...; HttpOnly; Secure; SameSite=Strict; Expires=...; Max-Age=604800
 
@@ -438,12 +435,12 @@ UI otimista: não aplicável. Login, logout, refresh e reset são ações que **
 
 // Response válida — ResetPassword (200 OK) — corpo vazio
 
-// Erro — credenciais inválidas (401 Unauthorized)
+// Erro — credenciais inválidas (400 Bad Request)
 {
   "title": "Bad Request",
   "type": "Auth.InvalidCredentials",
   "detail": "Invalid email or password",
-  "status": 401,
+  "status": 400,
   "errors": null
 }
 
@@ -480,25 +477,24 @@ UI otimista: não aplicável. Login, logout, refresh e reset são ações que **
 
 Observações:
 - O shape exato de `errors[]` depende de `IValidationResult.Errors` (Core) — assumido aqui como `Error[]` com `code` + `message` (o mesmo tipo `Error` usado em `HandleFailure`). O exemplo acima é ilustrativo; o frontend deve confirmar inspeccionando a resposta real do pipeline de validação.
-- O status `401` para `Auth.InvalidCredentials` é definido pelo `ProducesResponseType` do endpoint, mas o `HandleFailure` mapeia todo `Error` genérico para `400 Bad Request` por default (`var badRequest => endpoint.BadRequest(...)`). **Há divergência entre o status anunciado no Swagger (`401`) e o retorno efetivo (`400`) para `Auth.InvalidCredentials`** — ver §16.
 
 ---
 
 ## 16. Gaps, limitações e decisões abertas
 
-### Divergências spec × código
+### Divergências resolvidas
 
-1. **Nomes de role (`AccountingAdmin` vs `AccountancyAdmin`).** A spec e o logic.md usam `AccountancyAdmin` e `AccountancyEmployee`. O código em `UserRole.cs` define `AccountingAdmin` e `AccountingEmployee`. A claim `role` do JWT carrega o nome do código. Frontend precisa usar os valores do código (`AccountingAdmin`, `AccountingEmployee`). Decisão necessária: renomear no backend para alinhar com a spec, ou atualizar spec/logic. Não é decisão deste documento.
+1. ~~**Nomes de role (`AccountingAdmin` vs `AccountancyAdmin`)**~~ — **RESOLVIDO.** O código foi atualizado: `UserRole.cs` agora define `AccountancyAdmin` e `AccountancyEmployee`. A claim `role` do JWT carrega esses valores. Frontend deve usar `AccountancyAdmin` e `AccountancyEmployee`.
 
-2. **Status HTTP para credenciais inválidas.** `LoginEndpoint` declara `ProducesResponseType(StatusCodes.Status401Unauthorized)`, mas `HandleFailure` em `Core.Endpoints/Extensions/EndpointBaseExtensions.cs` mapeia `Error` genérico (incluindo `Auth.InvalidCredentials`) para `400 Bad Request`. Swagger mente — o frontend recebe `400` na prática. Decidir no backend: (a) introduzir `UnauthorizedError` como novo tipo em `HandleFailure`, ou (b) corrigir o Swagger para `400`.
+2. ~~**Status HTTP para credenciais inválidas**~~ — **RESOLVIDO.** `LoginEndpoint` agora declara apenas `ProducesResponseType(StatusCodes.Status400BadRequest)` para falha de credenciais. O Swagger e o comportamento real do `HandleFailure` estão alinhados: `Auth.InvalidCredentials` retorna `400 Bad Request`.
 
-3. **Requisitos de complexidade de senha.** Spec/logic referem-se apenas a "mínimo 8 caracteres". `ResetPasswordEndpoint.Description` no Swagger **afirma** "ao menos uma letra maiúscula, uma minúscula e um dígito", mas o `ResetPasswordValidator` **não implementa** essa regra — apenas `MinimumLength(8)`. O contrato real é mais permissivo do que o documentado no Swagger. Frontend pode implementar a validação mais forte localmente para UX (como hint), mas o backend aceitará `"12345678"`.
-
-4. **Endpoint de perfil do usuário autenticado (`GET /me`).** A seção 13 assume a possibilidade de um endpoint que exponha o perfil pós-login. Esse endpoint **não existe** no código atual. Alternativas para o frontend hoje: (a) decodificar o JWT localmente (não validar, só ler claims para popular UI), ou (b) aguardar spec futura de gestão de perfil. Gap conhecido já registrado em `identity-context.md`.
-
-5. **`traceId` em respostas de erro.** `HandleFailure` monta `ProblemDetails` sem popular `traceId` ou `path`. O middleware padrão do ASP.NET pode injetar `traceIdentifier` via `AddProblemDetails`, mas não é garantido para ProblemDetails construídos manualmente. O envelope canônico da documentação global (`{ statusCode, message, path, traceId, errors, detail }`) não é estritamente respeitado — o backend retorna o shape do `ProblemDetails` do ASP.NET (`title`, `type`, `detail`, `status`, `extensions.errors`). Frontend precisa se adaptar ao shape real.
+3. ~~**Requisitos de complexidade de senha**~~ — **RESOLVIDO.** Tanto `RegisterUserValidator` quanto `ResetPasswordValidator` agora implementam as mesmas regras: mínimo 8 caracteres, máximo 100, ao menos uma letra maiúscula, ao menos uma letra minúscula, ao menos um dígito. O contrato documentado no Swagger (`ResetPasswordEndpoint.Description`) está coerente com o validator.
 
 ### Limitações conhecidas (dentro do escopo)
+
+4. **Endpoint de perfil do usuário autenticado (`GET /me`).** A seção 13 assume a possibilidade de um endpoint que exponha o perfil pós-login. Esse endpoint **não existe** no código atual. Alternativas para o frontend hoje: (a) decodificar o JWT localmente (não validar, só ler claims para popular UI), ou (b) aguardar spec futura de gestão de usuário. Gap conhecido já registrado em `identity-context.md`. Endpoint de perfil faz parte da feature de gestão de usuários — não entra neste escopo.
+
+5. **`traceId` em respostas de erro.** `HandleFailure` monta `ProblemDetails` sem popular `traceId` ou `path`. O middleware padrão do ASP.NET pode injetar `traceIdentifier` via `AddProblemDetails`, mas não é garantido para ProblemDetails construídos manualmente. O envelope canônico da documentação global (`{ statusCode, message, path, traceId, errors, detail }`) não é estritamente respeitado — o backend retorna o shape do `ProblemDetails` do ASP.NET (`title`, `type`, `detail`, `status`, `extensions.errors`). Frontend precisa se adaptar ao shape real.
 
 6. **Múltiplos tokens de reset válidos coexistindo.** A spec aceita (§5 edge cases). O código confirma: `ForgotPasswordHandler` emite um novo `PasswordResetToken` a cada chamada **sem invalidar os anteriores**. Qualquer um pode ser consumido dentro do prazo de 1 hora. Aceito, documentado.
 
@@ -514,9 +510,7 @@ Observações:
 
 ### Decisões abertas
 
-- Alinhamento dos nomes de role entre código e spec (item 1).
-- Política real de força de senha — alinhar Swagger e validator (item 3).
-- Expor ou não `GET /me` para facilitar o frontend (item 4).
+- Expor ou não `GET /me` para facilitar o frontend (item 4) — entra em spec de gestão de usuários.
 - Padronizar o envelope de erro para incluir `traceId` (item 5).
 
-Esta documentação reflete o estado do código em `master` de `api.societiza` em 2026-04-20. Qualquer alteração na implementação requer regeneração deste artefato.
+Esta documentação reflete o estado do código em `master` de `api.societiza` em 2026-04-20. Qualquer alteração na implementação requer atualização deste artefato.
