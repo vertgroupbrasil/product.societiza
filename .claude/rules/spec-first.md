@@ -36,9 +36,9 @@ Cada artefato tem um momento específico. Não antecipar nem pular etapas.
 - É o contrato compartilhado que permite FE e BE trabalharem em paralelo
 
 ### 3. Integration doc (`integration.md`) — após o backend implementar
-- Gerado pelo agente de produto lendo o código de `api.societiza` via MCP + cruzando com a spec aprovada e o logic doc
+- Gerado pelo agente `tech-lead.md` de `api.societiza`, cruzando o código implementado com a spec aprovada e o logic doc
 - Salvo em `specs/[domain]-[concept]/integration.md` — nomes em inglês
-- Exige aprovação do backend (tech lead ou dev responsável) antes de ser considerado canônico
+- Exige aprovação do tech lead de backend antes de ser considerado canônico
 - Consumido por `web.societiza` via MCP do GitHub ao integrar a feature
 
 ## Razão

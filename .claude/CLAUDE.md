@@ -26,7 +26,7 @@ specs/                         <- specs aprovadas por domínio
   [domínio]-[conceito]/        <- ex: societario-tracking/
     spec.md                    <- spec de produto
     logic.md                   <- lógica de negócio (gerado após aprovação da spec)
-    integration.md             <- contrato backend → frontend (gerado após implementação)
+    integration.md             <- contrato backend → frontend (gerado pelo tech-lead.md de api.societiza)
 
 templates/                     <- modelos canônicos
   specification.md             <- template de spec de produto
