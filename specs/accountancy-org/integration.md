@@ -1,7 +1,8 @@
 ---
-status: draft
+status: approved
 spec: accountancy-org
 created_at: 2026-04-21
+approved_at: 2026-04-21
 ---
 
 # Accountancy — Contrato de Integração Backend → Frontend
