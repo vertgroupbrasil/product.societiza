@@ -68,24 +68,20 @@ ciclo de registro de usuário e a emissão de token ficam no módulo
   (SystemAdmin).
 - Validação estrutural local de CNPJ, CEP e telefone no pipeline de
   FluentValidation.
-- Unicidade de CNPJ na **criação** (verifica se já existe antes de
-  persistir).
+- Unicidade de CNPJ validada tanto na **criação** quanto na **edição**
+  (o `PUT` verifica se o CNPJ pertence a outra contabilidade antes de
+  gravar e retorna `409 CNPJAlreadyExists` quando há conflito).
 - Persistência de CNPJ, CEP e telefone **sem formatação** (apenas
   dígitos).
 - Soft-delete flag na projeção (`IsDeleted`) — listagem filtra por
   `!IsDeleted`, mas não há endpoint que altere este valor.
 - Ordenação fixa por `LegalName` e, como desempate, `CreatedAt` na
   listagem.
+- Paginação com total de registros e total de páginas expostos no
+  envelope da listagem.
 
 **O que ainda não está implementado:**
 
-- Verificação de unicidade de CNPJ no `PUT` (edição). O handler
-  `UpdateAccountancyHandler` atualiza sem comparar CNPJ com outras
-  contabilidades. Gap divergente da regra declarada em `logic.md`
-  (seção 16).
-- Paginação com total de registros. O `PagedResult` retorna apenas
-  `items` e `page { pageNumber, pageSize, hasNextPage, hasPreviousPage }`
-  — não há campo `total` (gap em relação ao que o logic.md pede).
 - Controle de concorrência otimista na edição. Dois SystemAdmins
   editando simultaneamente: vence o último `save`.
 - Endpoint para exclusão, inativação, reativação ou qualquer mudança
@@ -123,9 +119,10 @@ bem diferentes:
 - **Para o `SystemAdmin`**, é um back-office: uma listagem de
   contabilidades, um formulário de criação e um formulário de edição.
   Sucesso é "conseguir provisionar um novo cliente rapidamente".
-  Erro funcional é "criar uma contabilidade com CNPJ duplicado" (bloqueado
-  com 409 na criação) ou "submeter um formulário com campo obrigatório
-  ausente / CNPJ estruturalmente inválido" (400 com ProblemDetails).
+  Erro funcional é "criar ou editar com CNPJ duplicado" (bloqueado com
+  `409 CNPJAlreadyExists` tanto no `POST` quanto no `PUT`) ou "submeter
+  um formulário com campo obrigatório ausente / CNPJ estruturalmente
+  inválido" (`400` com ProblemDetails).
 
 - **Para o `AccountancyAdmin` e o `AccountancyEmployee`**, é uma tela
   identitária: "Minha Contabilidade". Sucesso é "entrar no produto e ver
@@ -171,10 +168,10 @@ segmento de URL `v1`. Caminhos completos:
 | Método | Path | Tipo | Finalidade | Params de rota | Pronta para frontend? |
 |---|---|---|---|---|---|
 | POST   | `/api/v1/accountancy`                       | Command | Criar contabilidade (SystemAdmin). Retorna o `Id` gerado. | — | sim |
-| GET    | `/api/v1/accountancy`                       | Query   | Listar contabilidades paginadas, ordenadas por `LegalName` (SystemAdmin). | — | sim, com ressalvas — ver §9.1 e §16 |
+| GET    | `/api/v1/accountancy`                       | Query   | Listar contabilidades paginadas, ordenadas por `LegalName` (SystemAdmin). | — | sim |
 | GET    | `/api/v1/accountancy/{accountancyId}`       | Query   | Consultar detalhe de qualquer contabilidade por id (SystemAdmin). | `accountancyId: Guid` | sim |
 | GET    | `/api/v1/accountancy/me`                    | Query   | "Minha Contabilidade" — retorna a contabilidade associada ao usuário autenticado via claim `accountancy_id`. | — | sim |
-| PUT    | `/api/v1/accountancy/{accountancyId}`       | Command | Atualizar dados cadastrais de uma contabilidade (SystemAdmin). Corpo completo obrigatório. | `accountancyId: Guid` | sim, com ressalvas — unicidade de CNPJ na edição não é validada, ver §16 |
+| PUT    | `/api/v1/accountancy/{accountancyId}`       | Command | Atualizar dados cadastrais de uma contabilidade (SystemAdmin). Corpo completo obrigatório. | `accountancyId: Guid` | sim |
 
 Notas operacionais:
 
@@ -245,7 +242,7 @@ Query string:
 
 Sem corpo. Sem parâmetros de busca, filtro ou ordenação — são decisões
 fechadas de produto; ordenação é fixa (`LegalName` ascendente, desempate
-por `CreatedAt`).
+por `CreatedAt` ascendente).
 
 Validações (`400 Bad Request` quando falham):
 
@@ -279,7 +276,10 @@ Corpo (`application/json`): **replace completo**. Todos os campos
 abaixo são obrigatórios no body — mesmo os opcionais para o domínio
 precisam ser enviados (pelo menos como `null`):
 
-- `CNPJ`: mesma regra da criação.
+- `CNPJ`: mesma regra da criação. **Unicidade é validada**: se o CNPJ
+  informado pertencer a outra contabilidade (diferente de
+  `accountancyId` da rota), o handler retorna `409 Conflict` com código
+  `CNPJAlreadyExists`.
 - `LegalName`: mesma regra.
 - `TradeName`: opcional no domínio, mas **precisa estar presente no body**
   (aceita `null`).
@@ -300,13 +300,6 @@ Transformações obrigatórias no frontend:
 
 Validações: idênticas às do `POST`, mais `Id is required` /
 `Id must be a valid GUID` quando o Guid é vazio.
-
-**Atenção — gap de unicidade na edição**: o handler de atualização
-**não** verifica unicidade de CNPJ. É possível, hoje, gravar a mesma
-`AccountancyId` com um CNPJ que já existe em outra contabilidade sem
-receber `409 Conflict`. O frontend precisa, por enquanto, proteger
-contra isso no fluxo de edição (consultando antes se o CNPJ está em uso,
-ou aceitando o risco de dados duplicados). Ver §16.
 
 ---
 
@@ -338,9 +331,14 @@ Envelope `IPagedResult<AccountancyDetailResponse>`:
   - `pageSize`: inteiro — tamanho da página.
   - `hasNextPage`: boolean — se existe página seguinte.
   - `hasPreviousPage`: boolean — se existe página anterior.
+  - `totalCount`: inteiro — total absoluto de contabilidades que
+    satisfazem a consulta (independente de `pageSize`).
+  - `totalPages`: inteiro — total de páginas calculado a partir de
+    `totalCount` e `pageSize`.
 
-**Campo `total` não é exposto.** Para saber se há mais, use
-`hasNextPage`. Ver §9.1 e §16.
+Com `totalCount` e `totalPages` o frontend tem tudo o que precisa para
+renderizar controles como "Página 3 de 12" ou salto direto para a
+última página.
 
 ### Response — `GET /api/v1/accountancy/{accountancyId}` e `GET /api/v1/accountancy/me`
 
@@ -446,22 +444,34 @@ CTAs que dependem desses estados:
 
 ## 10. Erros esperados e edge cases
 
-Os endpoints retornam `ProblemDetails` padrão (`application/problem+json`)
-em todas as falhas geradas pelo pipeline de validação/resultado. Já as
-exceções capturadas pelo middleware (`UnauthorizedException`,
-`ForbiddenException`, `NotFoundException`, exceção genérica) retornam
-um payload simplificado `{ "error": <código>, "message": <string> }`.
-O frontend precisa saber lidar com **os dois formatos** — ver §15.
+Os endpoints convivem com **dois envelopes de erro distintos**, ambos
+aplicados por camadas diferentes do pipeline. O frontend precisa tratar
+os dois. A regra é simples:
 
-| Status | Quando acontece | O que o frontend deve fazer |
-|---|---|---|
-| `400 Bad Request` | Validação FluentValidation falhou (ex. CNPJ inválido, CEP inválido, campo obrigatório ausente) **ou** paginação fora do range. Tipo `ValidationError`; `extensions.errors` traz a lista completa de códigos/mensagens. | Mapear erros por código (`CNPJ must be valid`, etc.) para feedback inline no formulário. Mensagens estão em inglês — o frontend deve traduzir para pt-BR. |
-| `400 Bad Request` | Regra de domínio violada (qualquer `Error` genérico que não seja NotFound/Conflict/Forbidden/Validation). `ProblemDetails.type` traz o código. | Exibir mensagem do backend como fallback e logar `traceId` via header `X-Correlation-ID` se presente. |
-| `401 Unauthorized` | Access token ausente, expirado ou com `security_stamp` inválido. | Redirecionar para login. Não tentar retry. |
-| `403 Forbidden` | Usuário autenticado não tem role exigida pela policy. `POST`, `PUT`, `GET /` e `GET /{id}` exigem `SystemAdmin`; `GET /me` exige qualquer usuário autenticado **mas só funciona** se a claim `accountancy_id` estiver presente. | Para SystemAdmin sem `accountancy_id` tentando abrir `/me`: o backend retorna `403` com código `AccountancyClaimMissing`. Frontend deve esconder o menu "Minha Contabilidade" para SystemAdmin. Para AccountancyAdmin/Employee tentando bater em rotas de escrita: o frontend deve esconder o back-office. |
-| `404 Not Found` | `GET /{id}` ou `GET /me` quando o `id`/claim aponta para uma contabilidade inexistente (código `AccountancyNotFound`). Também pode vir do router quando o `accountancyId` da URL não casa a constraint `:guid`. | Exibir estado "não encontrada" e oferecer retorno à listagem. |
-| `409 Conflict` | Apenas no `POST` quando o CNPJ já existe em outra contabilidade (código `CNPJAlreadyExists`). | Sinalizar o campo CNPJ no formulário com mensagem "CNPJ já cadastrado". |
-| `500 Internal Server Error` | Exceção não tratada. Envelope `{ error: "InternalServerError", message: "An unexpected error occurred." }`. | Exibir mensagem genérica e instruir o usuário a tentar novamente. |
+- Falhas retornadas pelo pipeline `Result` / `HandleFailure` (validação,
+  NotFound, Conflict, Forbidden oriundo do domínio, Bad Request
+  genérico) saem como `ProblemDetails` (`application/problem+json`).
+- Falhas capturadas pelo `ExceptionHandlingMiddleware` (exceções de
+  autenticação/autorização do ASP.NET, NotFound via exceção e qualquer
+  exceção não tratada) saem como envelope simplificado
+  `{ error, message }`.
+
+Este padrão é idêntico em Identity (Auth, Invitation, User) e em
+Accountancy — não há diferença de envelope por módulo.
+
+| Status | Quando acontece | Envelope | O que o frontend deve fazer |
+|---|---|---|---|
+| `400 Bad Request` | Validação FluentValidation falhou (ex. CNPJ inválido, CEP inválido, campo obrigatório ausente) **ou** paginação fora do range. Tipo `ValidationError`; `errors` traz a lista completa de códigos/mensagens. | `ProblemDetails` | Mapear erros por código (`CNPJ must be valid`, etc.) para feedback inline no formulário. Mensagens estão em inglês — o frontend traduz para pt-BR. |
+| `400 Bad Request` | Regra de domínio violada (qualquer `Error` genérico que não seja NotFound/Conflict/Forbidden/Validation). `type` traz o código. | `ProblemDetails` | Exibir `detail` do backend como fallback e logar `X-Correlation-ID` do header. |
+| `401 Unauthorized` | Access token ausente, expirado ou com `security_stamp` inválido. | `{ error: "Unauthorized", message }` | Redirecionar para login. Não tentar retry. |
+| `403 Forbidden` (via pipeline Result) | Falha `ForbiddenError` retornada pelo handler (ex. `GET /me` sem claim `accountancy_id` → código `AccountancyClaimMissing`). | `ProblemDetails` | Ler `type` para identificar o motivo (`AccountancyClaimMissing` etc.) e agir conforme o caso. |
+| `403 Forbidden` (via middleware) | Policy do ASP.NET rejeitou o acesso (ex. AccountancyAdmin chamando rota de SystemAdmin). | `{ error: "Forbidden", message }` | Esconder a UI proibida e, se chegar aqui, mostrar erro genérico de permissão. |
+| `404 Not Found` (via pipeline Result) | `GET /{id}` ou `GET /me` quando o id/claim aponta para contabilidade inexistente (código `AccountancyNotFound`). | `ProblemDetails` | Exibir estado "não encontrada" e oferecer retorno à listagem. |
+| `404 Not Found` (via router / middleware) | Rota inexistente ou `accountancyId` que não casa a constraint `:guid`; `NotFoundException` lançada. | vazio (router) ou `{ error: "NotFound", message }` (middleware) | Rota errada — sinalizar como 404 genérico. |
+| `409 Conflict` | `POST` ou `PUT` quando o CNPJ já existe em outra contabilidade (código `CNPJAlreadyExists`). | `ProblemDetails` | Sinalizar o campo CNPJ no formulário com mensagem "CNPJ já cadastrado". |
+| `500 Internal Server Error` | Exceção não tratada. | `{ error: "InternalServerError", message: "An unexpected error occurred." }` | Exibir mensagem genérica e instruir o usuário a tentar novamente. |
+
+Estrutura exata dos envelopes — ver exemplos em §15.
 
 Edge cases relevantes:
 
@@ -471,15 +481,16 @@ Edge cases relevantes:
 - **Múltiplos SystemAdmins editando a mesma contabilidade**: o último
   `save` vence. Não há ETag, `If-Match` nem versão otimista exposta.
   Decisão aceita em `logic.md` §5; frontend não precisa mostrar aviso.
-- **Listagem vazia**: `items = []`, `page.hasNextPage = false`,
+- **Listagem vazia**: `items = []`, `page.totalCount = 0`,
+  `page.totalPages = 0`, `page.hasNextPage = false`,
   `page.hasPreviousPage = false`. Frontend renderiza estado vazio.
 - **`GET /me` para SystemAdmin**: SystemAdmin não tem claim
   `accountancy_id`. O endpoint retorna `403` com código
   `AccountancyClaimMissing` — não `404`. Não exibir essa rota no menu
   desse perfil.
-- **CNPJ duplicado tentando editar para o CNPJ de outra contabilidade**:
-  **não é bloqueado** hoje (gap §16). Se ocorrer, a edição é aceita e
-  o frontend não recebe sinal de conflito.
+- **Edição para CNPJ de outra contabilidade**: bloqueada no `PUT`
+  exatamente como no `POST` — `409 CNPJAlreadyExists`. O frontend deve
+  tratar o 409 igual no formulário de criação e no de edição.
 
 ---
 
@@ -532,8 +543,8 @@ Edge cases relevantes:
   para mensagens localizadas pt-BR; exibir a mensagem crua do backend só
   como fallback.
 - **Feedback inline para erros de validação.** Mapear `type` ou lista
-  em `extensions.errors` para campo correspondente. Para `409` na
-  criação, foco no campo `CNPJ`.
+  em `errors` para campo correspondente. Para `409` (criação ou edição),
+  foco no campo `CNPJ`.
 - **Pós-mutação**:
   - `POST`: redirecionar para o próximo passo do onboarding (geração de
     convite) ou para a tela de detalhe da contabilidade recém-criada.
@@ -553,19 +564,18 @@ Edge cases relevantes:
   o SystemAdmin não editar. Como o usuário logado não pode editar a
   própria contabilidade, na prática invalidar só em login/refresh já é
   suficiente no fluxo do produto atual.
-- **UI otimista**: seguro no `PUT` porque o backend rejeita contratos
-  inválidos via validação síncrona; arriscado na criação pois existe a
-  chance de `409` de CNPJ duplicado que a UI não pode prever.
+- **UI otimista**: viável em ambos os casos, com atenção — tanto `POST`
+  quanto `PUT` podem falhar com `409 CNPJAlreadyExists` que a UI não
+  consegue prever antes do request.
 
 ### 13.1. Identificadores estáveis e chaves de reconciliação
 
 - `id` (`Guid`) é chave estável, única, gerada pelo backend. Usar como
   chave de lista (`key` em React) e como chave de reconciliação em
   cache (TanStack Query).
-- `cnpj` é único **por regra de negócio** (unicidade validada somente
-  na criação, ver gap §16), mas **não** deve ser usado como chave de
-  reconciliação no frontend — porque pode mudar via `PUT` (e essa
-  mudança não invalida o `id`).
+- `cnpj` é único por regra de negócio (validado em criação e edição),
+  mas **não** deve ser usado como chave de reconciliação no frontend —
+  porque pode mudar via `PUT` (e essa mudança não invalida o `id`).
 - `legalName` e `tradeName` são texto livre e mutáveis; nunca usar
   como chave.
 - `createdAt` é imutável depois de criado; pode servir como tie-breaker
@@ -577,9 +587,6 @@ Edge cases relevantes:
 - Campos `tradeName` e `email` podem sair de `null` para valor a
   qualquer momento (via `PUT`); o frontend precisa estar preparado
   para essa transição após invalidação da query.
-- Se no futuro o backend passar a expor `total` na paginação (gap §16),
-  a mudança será **aditiva** — o frontend atual que só consome
-  `hasNextPage` continua funcionando.
 
 ---
 
@@ -685,7 +692,9 @@ Edge cases relevantes:
     "pageNumber": 1,
     "pageSize": 10,
     "hasNextPage": false,
-    "hasPreviousPage": false
+    "hasPreviousPage": false,
+    "totalCount": 1,
+    "totalPages": 1
   }
 }
 ```
@@ -706,7 +715,7 @@ Edge cases relevantes:
 ```
 
 ```json
-// Erro de validação — 400 Bad Request (ProblemDetails)
+// Erro de validação — 400 Bad Request (ProblemDetails, via HandleFailure)
 {
   "title": "Validation Error",
   "type": "ValidationError",
@@ -719,42 +728,41 @@ Edge cases relevantes:
 }
 ```
 
-> Observação: a estrutura exata de cada item em `errors` segue o record
-> `Error` interno do backend (`{ code, message }`). Ver §16 para a
-> nota sobre divergência com o envelope descrito no template genérico.
-
 ```json
-// Conflito — 409 (POST com CNPJ duplicado)
+// Conflito — 409 (POST ou PUT com CNPJ duplicado) (ProblemDetails)
 {
   "title": "Conflict",
   "type": "CNPJAlreadyExists",
   "detail": "An accountancy with the same CNPJ already exists",
-  "status": 409
+  "status": 409,
+  "errors": null
 }
 ```
 
 ```json
-// Não encontrado — 404 (GET /{id} inexistente)
+// Não encontrado — 404 (GET /{id} inexistente) (ProblemDetails via HandleFailure)
 {
   "title": "Not Found",
   "type": "AccountancyNotFound",
   "detail": "Accountancy 7c9b8f1a-4d2e-4a6b-9c3f-1e2d5a7b8c9e not found",
-  "status": 404
+  "status": 404,
+  "errors": null
 }
 ```
 
 ```json
-// Proibido — 403 (GET /me sem claim accountancy_id, via ProblemDetails)
+// Proibido — 403 (GET /me sem claim accountancy_id) (ProblemDetails via HandleFailure)
 {
   "title": "Forbidden",
   "type": "AccountancyClaimMissing",
   "detail": "User does not have an associated accountancy.",
-  "status": 403
+  "status": 403,
+  "errors": null
 }
 ```
 
 ```json
-// Proibido — 403 (via middleware de exceção, payload simplificado)
+// Proibido — 403 (via ExceptionHandlingMiddleware, policy ASP.NET)
 {
   "error": "Forbidden",
   "message": "You do not have permission to access this resource."
@@ -762,7 +770,7 @@ Edge cases relevantes:
 ```
 
 ```json
-// Não autorizado — 401 (via middleware de exceção)
+// Não autorizado — 401 (via ExceptionHandlingMiddleware)
 {
   "error": "Unauthorized",
   "message": "Authentication is required to access this resource."
@@ -770,12 +778,30 @@ Edge cases relevantes:
 ```
 
 ```json
-// Erro interno — 500 (via middleware de exceção)
+// Não encontrado — 404 (via ExceptionHandlingMiddleware, NotFoundException)
+{
+  "error": "NotFound",
+  "message": "<mensagem específica da exceção>"
+}
+```
+
+```json
+// Erro interno — 500 (via ExceptionHandlingMiddleware)
 {
   "error": "InternalServerError",
   "message": "An unexpected error occurred."
 }
 ```
+
+**Regra de interpretação no cliente**:
+
+- Se o body tem `title` + `type` + `detail` + `status` → `ProblemDetails`
+  (falha retornada pelo pipeline `Result`/`HandleFailure`). Use `type`
+  como código legível e `errors[]` quando presente para feedback de
+  formulário.
+- Se o body tem `error` + `message` → envelope simplificado do
+  `ExceptionHandlingMiddleware` (exceção de auth/auth ou exceção não
+  tratada). Use `error` como código e `message` como descrição.
 
 ---
 
@@ -783,57 +809,13 @@ Edge cases relevantes:
 
 Gaps identificados entre `logic.md` aprovado e o código implementado:
 
-1. **Unicidade de CNPJ na edição não é validada pelo backend.** O
-   `UpdateAccountancyHandler` não verifica se o CNPJ pertence a outra
-   contabilidade antes de gravar. `logic.md` §3 e §5 declaram que a
-   verificação deve existir, excluindo o próprio `accountancyId` da
-   comparação. Hoje o frontend não recebe `409` nesse caso — a edição
-   é aceita silenciosamente. **Decisão para o revisor**: confirmar se o
-   backend vai implementar a checagem (retornando `409 CNPJAlreadyExists`
-   também no `PUT`) ou se o produto aceita essa lacuna por enquanto.
-
-2. **Paginação não expõe total de registros.** `logic.md` §4 lista
-   "total de registros da listagem, para calcular paginação" como
-   necessidade do frontend. O `IPagedResult<T>` atual traz apenas
-   `items`, `pageNumber`, `pageSize`, `hasNextPage`, `hasPreviousPage`.
-   Consequência: o frontend não consegue renderizar "Página 3 de 12" —
-   só "Próxima / Anterior". **Decisão para o revisor**: aceitar a
-   limitação ou ampliar o envelope para incluir `total` / `totalPages`.
-
-3. **Envelope de erro do template vs. implementação.** O template
-   `integration.md` genérico descreve o envelope de erro como
-   `{ statusCode, message, path, traceId, errors, detail }`. A
-   implementação usa:
-   - `ProblemDetails` (`title`, `type`, `detail`, `status`,
-     `extensions.errors`) para erros retornados pelo pipeline
-     Result/HandleFailure.
-   - Envelope simplificado `{ error, message }` para exceções
-     capturadas pelo `ExceptionHandlingMiddleware` (401/403/404/500
-     quando originárias de exceção e não de Result).
-   O frontend precisa tratar **os dois formatos**. Não há `traceId` no
-   corpo — correlação vive apenas no header.
-
-4. **Validação de UF não verifica lista de siglas reais.** O validator
+1. **Validação de UF não verifica lista de siglas reais.** O validator
    aceita qualquer string de até 2 caracteres. Fica a cargo do frontend
    ofertar um dropdown com as 27 UFs válidas para reduzir entrada suja.
 
-5. **Ordenação fixa sem opção de reversão.** `LegalName` ascendente é a
+2. **Ordenação fixa sem opção de reversão.** `LegalName` ascendente é a
    única ordem possível. `logic.md` não exige reversão, mas é útil
    explicitar para o frontend não oferecer controles de ordenação.
-
-6. **`PUT` é replace total.** Não há endpoint `PATCH` parcial. O
-   frontend obrigatoriamente carrega o estado atual antes de editar. Se
-   esse padrão gerar fricção, é candidato a evolução futura.
-
-7. **Soft-delete flag sem operação exposta.** `ProjectionModel.Accountancy`
-   tem `IsDeleted`, mas nenhum endpoint muda o valor. Na prática é código
-   morto para o frontend. Registrado para não causar confusão em
-   análises futuras do read model.
-
-8. **Controle de concorrência otimista inexistente.** Conforme
-   `logic.md` §5, a decisão atual é "o último `save` vence". Sem
-   ETag/`If-Match` na resposta/request. Se dois SystemAdmins editarem
-   simultaneamente, nenhum dos dois é avisado.
 
 Limitações por decisão consciente (não são gaps):
 
@@ -841,6 +823,13 @@ Limitações por decisão consciente (não são gaps):
 - Não existe edição self-service pelo `AccountancyAdmin`. Intencional.
 - Não existe busca textual ou filtro. Intencional nesta versão.
 - Não existe identidade visual customizável. Intencional.
+- `PUT` é replace total; não há `PATCH` parcial. Intencional; o
+  frontend carrega o estado atual antes de editar.
+- Soft-delete flag `IsDeleted` existe na projeção mas nenhum endpoint
+  altera o valor. Intencional; mantém o read model preparado para
+  evolução futura.
+- Controle de concorrência otimista inexistente; "o último `save`
+  vence" é decisão aceita em `logic.md` §5.
 
 Nenhuma decisão aberta dependente do frontend para esta feature além
 das listadas acima.
