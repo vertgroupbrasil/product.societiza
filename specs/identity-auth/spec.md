@@ -2,6 +2,7 @@
 status: approved
 domain: identity
 created_at: 2026-04-20
+approved_at: 2026-04-20
 ---
 
 # Autenticação

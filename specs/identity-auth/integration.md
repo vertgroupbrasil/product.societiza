@@ -3,7 +3,7 @@ status: approved
 spec: identity-auth
 domain: identity
 created_at: 2026-04-20
-updated_at: 2026-04-20
+approved_at: 2026-04-20
 ---
 
 # Autenticação — Contrato de Integração Backend → Frontend
