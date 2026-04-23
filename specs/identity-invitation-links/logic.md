@@ -2,7 +2,7 @@
 status: approved
 spec: identity-invitation-links
 created_at: 2026-04-17
-approved_at: 2026-04-17
+approved_at: 2026-04-23
 ---
 
 # Lógica de Negócio — Links de Convite
@@ -30,16 +30,8 @@ e um que convida um AccountancyAdmin para uma contabilidade específica
 3. O sistema cria o link com limite fixo de 1 uso e validade de 7 dias. A contabilidade vem do contexto de navegação — não é campo preenchido pelo SystemAdmin.
 4. O link fica disponível para cópia e visível na área de convites ativos daquela contabilidade.
 
-**Revogando um link SA→SA:**
-
-O SystemAdmin pode revogar apenas links SA→SA. Ao revogar, o link transita para
-o estado revogado imediatamente e não pode mais ser usado. O link permanece
-visível no histórico com o status "revogado".
-
 **Tentativas de ação proibida:**
 
-O SystemAdmin não pode revogar links de contabilidade — links AA→AA e AA→AE
-pertencem ao tenant e são gerenciados pelos AccountancyAdmins do próprio tenant.
 O SystemAdmin não pode reativar um link em estado terminal. O SystemAdmin não
 pode excluir links — o mecanismo de neutralização é exclusivamente a revogação.
 
@@ -79,13 +71,6 @@ histórica (links esgotados, expirados e revogados) está disponível em separad
 Para cada link, o admin vê o perfil de destino, o limite de usos, a contagem
 atual de usos, a data de criação, a data de expiração e quem criou o link.
 
-**Revogando um link:**
-
-O AccountancyAdmin pode revogar qualquer link ativo da sua contabilidade —
-incluindo links criados por outros AccountancyAdmins do mesmo tenant. Ao
-revogar, o link transita imediatamente para o estado revogado. Permanece no
-histórico.
-
 **Tentativas de ação proibida:**
 
 - Se um AccountancyAdmin tentar criar um link apontando para outra
@@ -93,7 +78,6 @@ histórico.
   próprio admin, sem exceção.
 - Se tentar criar um link para um perfil superior ao seu (ex: SystemAdmin):
   o sistema rejeita.
-- Se tentar revogar um link de outra contabilidade: o sistema rejeita.
 - Se tentar reativar um link em estado terminal: o sistema rejeita.
 
 ---
@@ -137,11 +121,11 @@ acesso à área de convites.
 
 ### Link de convite
 
-Um link de convite existe em um de quatro estados:
+Um link de convite existe em um de três estados:
 
 **Ativo**
-O link está dentro do prazo de validade (7 dias a partir da criação), tem usos
-disponíveis (usos atuais < maxUses) e não foi revogado. Só links ativos podem
+O link está dentro do prazo de validade (7 dias a partir da criação) e tem usos
+disponíveis (usos atuais < maxUses). Só links ativos podem
 ser usados por convidados e aparecem na visão padrão da área de convites.
 
 **Esgotado**
@@ -152,17 +136,12 @@ sistema no momento em que o último uso é consumido. Estado terminal.
 O prazo de 7 dias venceu sem que o limite de usos tenha sido atingido.
 Transição causada pelo sistema pela passagem do tempo. Estado terminal.
 
-**Revogado**
-Um admin com permissão cancelou o link manualmente antes de ele esgotar ou
-expirar. Transição causada por ação do usuário. Estado terminal.
-
 **Diagrama de transições:**
 
 ```
 [Criado] → Ativo
 Ativo → Esgotado   (último uso consumido)
 Ativo → Expirado   (7 dias passados)
-Ativo → Revogado   (ação manual de admin com permissão)
 ```
 
 Nenhum estado terminal tem transição de saída. Não existe reativação.
@@ -197,25 +176,20 @@ fluxo separado de gestão de usuário, fora do escopo desta feature.
   - Um único link SA→AA ativo por contabilidade de destino.
   - Um único link AA→AA ativo por contabilidade.
   - Um único link AA→AE ativo por contabilidade.
-- A tentativa de criar um segundo link ativo no mesmo escopo é rejeitada pelo sistema. O admin precisa revogar o link ativo existente antes de criar um novo, ou aguardar transição natural para estado terminal (esgotado ou expirado).
-- A unicidade se aplica apenas a links no estado ativo. Links em estados terminais (esgotado, expirado, revogado) não bloqueiam a criação de um novo link no mesmo escopo.
+- A tentativa de criar um segundo link ativo no mesmo escopo é rejeitada pelo sistema. O admin precisa aguardar transição natural para estado terminal (esgotado ou expirado) antes de criar um novo.
+- A checagem de unicidade é feita via consulta à projection imediatamente antes da criação (soft check). Não é atômica — race conditions de criação simultânea são um risco aceito no MVP de baixo volume.
+- A unicidade se aplica apenas a links no estado ativo. Links em estados terminais (esgotado, expirado) não bloqueiam a criação de um novo link no mesmo escopo.
 - Todo link expira exatamente 7 dias após a criação, independente do perfil ou tipo.
-- Um link só pode ser usado se estiver ativo: dentro do prazo, com usos disponíveis e não revogado. As três condições são verificadas no momento do uso.
+- Um link só pode ser usado se estiver ativo: dentro do prazo e com usos disponíveis. As condições são verificadas no momento do uso.
 - Ao ser usado, o contador de usos do link é incrementado. Se o incremento leva o contador ao limite, o link transita para esgotado no mesmo instante.
 - Convidado com conta existente na Societiza não pode usar o link. O sistema bloqueia com mensagem. Nenhuma conta é criada ou modificada.
 - Todo usuário criado via link carrega a referência ao link de origem. Esta referência não é modificável após a criação da conta.
-- Quem criou um link pode revogá-lo.
-- AccountancyAdmin pode revogar qualquer link ativo da sua contabilidade, inclusive os criados por outros AccountancyAdmins do mesmo tenant.
-- SystemAdmin pode revogar apenas links SA→SA.
-- Links AA→AA e AA→AE pertencem ao tenant. SystemAdmin não pode revogá-los.
 - O link SA→AA é sempre criado no contexto de uma contabilidade específica. A contabilidade vem do contexto de navegação, não de seleção em formulário.
 - O link SA→AA aparece na área de convites da contabilidade de destino — visível para AccountancyAdmins do tenant e para o SystemAdmin quando ele acessa o contexto daquela contabilidade. Não aparece na área geral de convites do SystemAdmin.
-- Revogação de link em estado terminal (esgotado, expirado ou já revogado) é rejeitada pelo sistema.
 - Nenhum link é excluído. Revogação é o único mecanismo de neutralização.
 - Links esgotados, expirados e revogados permanecem visíveis no histórico com status explícito.
 - A visão padrão da área de convites exibe apenas links ativos. Links inativos ficam na visão histórica separada.
 - Todos os AccountancyAdmins de uma mesma contabilidade enxergam todos os links daquela contabilidade (criados por qualquer um dos admins do tenant).
-- Revogação por SystemAdmin não gera notificação ao criador original do link.
 - Usuários que já entraram por um link não são afetados pela revogação posterior desse link. A revogação impede novos usos — não desfaz usos anteriores.
 
 ---
@@ -235,9 +209,8 @@ Frontend precisa saber:
     acessível a partir do link na visão histórica ou no detalhe do link ativo
   - Qual é a contabilidade do admin autenticado (para saber quais links ele
     pode criar e revogar)
-  - Se o link acessado pelo convidado é válido (ativo) ou não, com o motivo
-    (esgotado, expirado, revogado) — para apresentar a mensagem correta ao
-    convidado
+  - Resultado do cadastro via link: se bem-sucedido ou, em caso de erro, o
+    motivo (link expirado, link esgotado, e-mail já existente).
   - Se já existe um link ativo no escopo em questão (tipo + contabilidade de
     destino quando aplicável) — para desabilitar o botão de criar novo link e
     sinalizar ao admin que ele precisa revogar o link ativo atual antes de
@@ -245,9 +218,9 @@ Frontend precisa saber:
     tentativa de criação
 
 Backend precisa garantir:
-  - Verificação atômica das três condições de uso (prazo, usos disponíveis,
-    não revogado) — as três condições verificadas em uma única operação para
-    evitar race condition
+  - Verificação das três condições de usabilidade no momento do uso: status
+    ativo, usos disponíveis (Uses < MaxUses) e prazo não vencido
+    (ExpiresAt > now).
   - Incremento atômico do contador de usos — impede que dois convidados
     simultâneos ambos passem com o último uso disponível
   - Transição automática para "esgotado" no momento em que o último uso é
@@ -261,15 +234,13 @@ Backend precisa garantir:
     nem para links SA→AA criados pelo SystemAdmin dentro de uma contabilidade
   - Isolamento multi-tenant na listagem: AccountancyAdmin vê apenas links da
     sua contabilidade; SystemAdmin vê todos
-  - Verificação atômica de unicidade de link ativo por tipo e escopo na
-    criação — a checagem de "existe link ativo no mesmo escopo?" e a inserção
-    do novo link acontecem na mesma operação, para impedir que duas criações
-    simultâneas resultem em dois links ativos no mesmo escopo. Escopo é o par
-    (tipo, contabilidade de destino quando aplicável). Resposta de conflito
-    distinguível pelo frontend, para permitir mensagem específica ao admin
-  - Permissão de revogação: validar que quem revoga tem autoridade sobre o link
-    antes de executar a revogação
-  - Rejeição de revogação em estado terminal com erro claro
+  - Checagem soft de unicidade de link ativo por tipo e escopo na criação —
+    a checagem de "existe link ativo no mesmo escopo?" é feita via consulta
+    à projection imediatamente antes da criação. Não é uma operação atômica;
+    race conditions de criação simultânea são um risco aceito no MVP de
+    baixo volume (ver Seção 3). Escopo é o par (tipo, contabilidade de destino
+    quando aplicável). Resposta de conflito distinguível pelo frontend, para
+    permitir mensagem específica ao admin
   - Referência ao link de origem gravada na conta criada, de forma não
     modificável após a criação
   - Bloqueio de uso do link por usuário com conta existente, com motivo
@@ -291,23 +262,6 @@ Um link pode chegar ao momento do uso com o prazo vencido mas sem ter sido
 marcado por um job de expiração. **Decisão:** a validação de expiração é feita
 em tempo real, no momento do uso, comparando `expiresAt` com o instante atual.
 O job de varredura (se existir) é auxiliar, não autoritativo.
-
-### Revogação de link já inativo
-Um admin tenta revogar um link que já está esgotado, expirado ou revogado.
-**Decisão:** o sistema rejeita a ação com mensagem clara de que o link já está
-em estado terminal. Nenhuma transição ocorre.
-
-### Usuários que entraram antes da revogação
-Um AccountancyAdmin revoga um link AA→AE depois de 3 dos 5 usos já terem sido
-consumidos. **Decisão:** os 3 usuários que já entraram permanecem com acesso
-pleno. A revogação impede os 2 usos restantes — não desfaz os anteriores. O
-histórico do link mostra os 3 usuários que entraram e o status "revogado".
-
-### SystemAdmin revoga link de contabilidade sem notificar o criador
-O AccountancyAdmin criador não recebe nenhuma notificação. **Decisão:** aceito
-nesta versão. O link permanece visível no histórico da contabilidade com status
-"revogado". Se o criador acessar a visão histórica, vê o status. Refinamento
-para notificação fica fora do escopo do MVP.
 
 ### AccountancyAdmin tenta ver links de outra contabilidade
 **Decisão:** o sistema não retorna dados de outra contabilidade. A listagem é
@@ -337,14 +291,7 @@ link ativo preexistente permanece intacto.
 
 ### Criação simultânea por dois admins do mesmo tenant
 Dois AccountancyAdmins do mesmo tenant tentam criar, no mesmo instante, um
-link do mesmo tipo para a mesma contabilidade. **Decisão:** o backend garante
-atomicidade na checagem de unicidade — apenas uma das duas criações sucede.
-A outra recebe a resposta de conflito, como se o link ativo já existisse no
-momento da tentativa (o que passa a ser verdade após a primeira sucesso). O
-frontend apresenta a mensagem correspondente e atualiza a visão.
-
-### Revogação imediatamente seguida de criação no mesmo escopo
-Um admin revoga o link ativo atual e, em seguida, cria um novo link no mesmo
-escopo. **Decisão:** aceito. A revogação move o link anterior para estado
-terminal, liberando o escopo. A criação subsequente sucede normalmente. Os
-dois links coexistem na listagem: o revogado no histórico, o novo em ativos.
+link do mesmo tipo para a mesma contabilidade. **Decisão:** o backend faz
+checagem soft via projection antes de criar. Em volume baixo, a probabilidade
+de race condition é aceita como risco de MVP. A segunda criação pode resultar
+em dois links ativos no mesmo escopo em cenário de concorrência extrema.

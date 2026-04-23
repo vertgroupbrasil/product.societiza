@@ -2,7 +2,7 @@
 status: approved
 domain: identity
 created_at: 2026-04-17
-approved_at: 2026-04-17
+approved_at: 2026-04-23
 ---
 
 # Links de Convite
@@ -18,23 +18,19 @@ grupo, mensagem direta — e a pessoa entra quando estiver pronta.
 
 O admin decide na criação quantas pessoas podem entrar por aquele link. O
 sistema cuida do resto: conta os usos, respeita o prazo de validade de 7
-dias e bloqueia o link automaticamente assim que o limite é atingido, quando
-vence, ou quando o admin decide revogar. Nada é apagado — todo link criado
-permanece no histórico, junto com a lista de quem entrou por ele. Quando o
-admin precisa saber "como essa pessoa chegou ao sistema?", a resposta está
-ali.
+dias e bloqueia o link automaticamente assim que o limite é atingido ou
+quando vence. Nada é apagado — todo link criado permanece no histórico,
+junto com a lista de quem entrou por ele. Quando o admin precisa saber
+"como essa pessoa chegou ao sistema?", a resposta está ali.
 
 A experiência é simples: dentro da área de equipe, um botão gera um link
 pronto para copiar. Na área de convites, a visão default mostra apenas os
 links **ativos** — é a pergunta operacional que o admin faz no dia a dia
 ("o que posso compartilhar agora?"). Os links **inativos** (esgotados,
-expirados, revogados) permanecem acessíveis em uma visão histórica
+expirados) permanecem acessíveis em uma visão histórica
 separada, preservando a rastreabilidade sem poluir a tela de trabalho.
 Nada é apagado — todo link criado permanece consultável, com sua contagem
-de uso e a lista de quem entrou por ele. Dentro de uma mesma contabilidade,
-todos os AccountancyAdmins enxergam e podem revogar os links criados por
-qualquer outro admin da mesma contabilidade — o tenant é transparente para
-quem tem autoridade administrativa dentro dele.
+de uso e a lista de quem entrou por ele.
 
 **Modelo de autoridade dentro da contabilidade.** Uma contabilidade pode
 ter N AccountancyAdmins. Não há limite de 1. Um AccountancyAdmin pode
@@ -184,6 +180,10 @@ que é *dirigido por papel* dentro da plataforma.
 - **Não inclui** reativação de link expirado, revogado ou esgotado.
   Qualquer um desses estados é terminal. Se o admin precisa de mais
   acesso, gera um link novo.
+- **Não inclui** revogação manual de links. O único mecanismo de
+  encerramento de ciclo de vida é a expiração por tempo (7 dias) ou o
+  esgotamento de usos. Links não podem ser cancelados manualmente nesta
+  versão.
 - **Não inclui** exclusão de link. Nenhum link é apagado — nem pelo
   criador, nem pelo SystemAdmin. Todo link criado permanece no
   histórico com seu status final. O mecanismo para neutralizar um link
@@ -216,8 +216,8 @@ controlado.
 | Limite de uso — AccountancyAdmin → AccountancyAdmin | Fixo em 1. Admin é cargo escolhido individualmente, não onboarding de equipe. Mesma lógica e simetria do caso SA → SA. |
 | Limite de uso — AccountancyAdmin → AccountancyEmployee | Definido pelo admin no momento da criação. |
 | Limite de uso — SystemAdmin → AccountancyAdmin | Fixo em 1. Convite dirigido a uma pessoa específica, não onboarding de equipe. Simétrico a SA → SA e AA → AA. |
-| Separação visual entre links ativos e inativos | Sim. Visão default da área de convites mostra apenas links ativos. Links inativos (esgotados, expirados, revogados) vão para uma visão histórica separada. Preserva rastreabilidade sem poluir a tela de trabalho. Decisão de produto, execução de interface. |
-| Revogação | Quem criou o convite pode revogar. AccountancyAdmins podem revogar qualquer link ativo da sua própria contabilidade — inclusive os criados por outros AccountancyAdmins do mesmo tenant. SystemAdmin pode revogar apenas links SA→SA. |
+| Separação visual entre links ativos e inativos | Sim. Visão default da área de convites mostra apenas links ativos. Links inativos (esgotados, expirados) vão para uma visão histórica separada. Preserva rastreabilidade sem poluir a tela de trabalho. Decisão de produto, execução de interface. |
+| Revogação | Não implementada no MVP. Ciclo de vida encerra apenas por expiração (7 dias) ou esgotamento de usos. Revogação manual fica para evolução futura. |
 | Comportamento pós-limite/expiração/revogação | Estados terminais. Link não pode ser reativado. O admin gera um novo se necessário. |
 | Preservação de histórico | Nenhum convite é excluído fisicamente. Links esgotados, expirados e revogados permanecem visíveis na área de convites com status claro. |
 | Rastreabilidade | Todo usuário que entra por um link carrega referência ao link pelo qual entrou. A lista de quem entrou por um link é consulta direta. Usuários semeados fora do fluxo de convite (primeiro SystemAdmin) não têm essa referência — é aceitável. |
@@ -240,7 +240,6 @@ Resumo do que foi fechado nesta iteração:
 
 - Aviso visual de expiração iminente → sim, responsabilidade do frontend
   a partir dos campos `createdAt` e `expiresAt`.
-- Notificação ao criador quando SystemAdmin revoga → não.
 - Atalho "revogar e regerar" → não, fora do escopo MVP.
 - Visibilidade cross-admin dentro da mesma contabilidade → sim, links são
   compartilhados entre todos os AccountancyAdmins do mesmo tenant.
