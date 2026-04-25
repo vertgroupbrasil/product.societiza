@@ -1,7 +1,8 @@
 ---
-status: draft
+status: approved
 spec: identity-user-management
 created_at: 2026-04-17
+approved_at: 2026-04-24
 ---
 
 # Lógica de Negócio — Gestão de Usuários
@@ -215,8 +216,7 @@ Não há confirmação adicional — a ação é reversível pelo próprio usuá
 - Histórico de autoria (processos, etapas, tarefas, comentários, convites) criado
   pelo usuário removido é preservado integralmente — a referência ao criador
   permanece e o nome é exibido mesmo após a remoção.
-- Convites ativos criados por um usuário removido permanecem ativos — não são
-  auto-revogados. Outros admins da contabilidade podem revogá-los manualmente.
+- Convites ativos criados por um usuário removido permanecem ativos.
 - Promoção tem efeito imediato — permissões de AccountancyAdmin aplicadas antes
   da resposta do servidor.
 - Promoção e remoção exigem confirmação explícita do solicitante antes de
@@ -348,12 +348,11 @@ devem respeitar ao consumir dados de autoria.
 ### Admin remove um usuário que gerou convites ativos
 
 Situação: um AccountancyAdmin ou AccountancyEmployee gerou convites que ainda
-estão pendentes (não expirados, não revogados). O usuário é removido.
+estão pendentes (não expirados). O usuário é removido.
 
-Decisão fechada: os convites permanecem ativos após a remoção do criador. Não
-há revogação automática em cascata. Os demais admins da contabilidade já
-enxergam esses convites no fluxo de gestão de convites e podem revogá-los
-manualmente se for o caso. Nenhuma ação automática é necessária no MVP.
+Decisão fechada: os convites permanecem ativos após a remoção do criador. Os
+demais admins da contabilidade já enxergam esses convites. Nenhuma ação
+automática é necessária no MVP.
 
 ---
 

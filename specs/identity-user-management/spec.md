@@ -1,7 +1,8 @@
 ---
-status: draft
+status: approved
 domain: identity
 created_at: 2026-04-17
+approved_at: 2026-04-24
 ---
 
 # Gestão de Usuários
@@ -48,8 +49,7 @@ interna depende da ordem em que cada um foi convidado — não da função que
 cada um exerce de fato.
 
 **Saída sem caminho.** Pessoas saem da contabilidade. São desligadas,
-pedem demissão, migram para outra função. O link de convite tem revogação,
-mas usuários que já entraram não têm nenhum mecanismo de saída. Isso é um
+pedem demissão, migram para outra função. Usuários que já entraram não têm nenhum mecanismo de saída. Isso é um
 problema de segurança (ex-funcionário mantém acesso à operação societária
 da empresa), um problema operacional (lista da equipe fica poluída com
 gente que não existe mais) e um problema de confiança (admin não consegue
@@ -270,8 +270,7 @@ gerenciável.
 - **Não inclui** reativação de usuário removido. Remoção é terminal.
   Se a pessoa precisa voltar, o admin gera um novo link de convite e
   ela entra como um novo usuário (com novo registro, mantendo o histórico
-  antigo como histórico de alguém que saiu). Coerente com a postura dos
-  links de convite (revogação é terminal) e simplifica o fluxo — sem
+  antigo como histórico de alguém que saiu). Simplifica o fluxo — sem
   modal de confirmação "tem certeza que quer reativar este usuário?",
   sem preocupação com colisão de e-mail entre registro antigo e novo.
 - **Não inclui** troca de contabilidade (transferir usuário de uma
@@ -312,7 +311,7 @@ atividade do usuário, ambos absorvidos pela estrutura atual.
 | Reativação de usuário removido | Não existe. Remoção é terminal. Para voltar, novo convite gera novo usuário. |
 | Comportamento da sessão ativa do usuário removido | Invalidada imediatamente. O usuário removido perde acesso no ato, sem esperar próximo login. |
 | Histórico de autoria em processos/etapas/tarefas/comentários/convites criados por usuário removido | Preservado. A referência ao criador permanece e a interface mostra o nome preservado mesmo após a remoção. Coerente com "histórico intocável" do fluxo de convites. |
-| Convites ativos criados por usuário removido | Permanecem ativos até expirar, esgotar ou serem revogados por outro admin da contabilidade. A revogação automática em cascata não é parte do MVP — outros admins do mesmo tenant já enxergam e podem revogar, conforme fluxo de convites. |
+| Convites ativos criados por usuário removido | Permanecem ativos até expirar ou esgotar. Outros admins do mesmo tenant já enxergam esses convites. |
 | Notificação por e-mail de promoção ou exclusão | Não no MVP. Descoberta ao próximo login (promoção) ou na perda de sessão (exclusão). Notificações entram com o módulo de notificações. |
 | Trilha de auditoria visível ao usuário | Não no MVP. Sistema registra internamente para suporte e rastreabilidade, mas não há tela dedicada. |
 | Listagem vista pelo SystemAdmin | Painel administrativo lista todos os SystemAdmins. Ao entrar no contexto de uma contabilidade, lista AccountancyAdmins e AccountancyEmployees daquela contabilidade. |

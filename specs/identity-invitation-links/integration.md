@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 spec: identity-invitation-links
 created_at: 2026-04-23
 ---
