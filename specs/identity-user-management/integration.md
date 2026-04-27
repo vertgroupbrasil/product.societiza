@@ -1,3 +1,11 @@
+---
+status: approved
+spec: identity-user-management
+domain: identity
+created_at: 2026-04-27
+approved_at: 2026-04-27
+---
+
 # Contrato de Integração — Gestão de Usuários
 
 ## 1. Identificação da feature

@@ -1,6 +1,7 @@
 ---
 status: approved
 spec: accountancy-org
+domain: accountancy
 created_at: 2026-04-21
 approved_at: 2026-04-21
 ---

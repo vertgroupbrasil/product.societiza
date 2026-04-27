@@ -1,7 +1,9 @@
 ---
 status: approved
 spec: identity-invitation-links
+domain: identity
 created_at: 2026-04-23
+approved_at: 2026-04-23
 ---
 
 # Contrato de Integração Backend → Frontend — Identity Invitation Links
