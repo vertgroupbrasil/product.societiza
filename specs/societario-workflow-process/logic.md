@@ -41,9 +41,16 @@ ativo.
 
 **Operação do board:**
 
-1. Acessa o board e vê todos os processos da contabilidade em kanban.
-2. Pode filtrar o board por tipo de processo (abertura, alteração, baixa).
-3. Abre um processo para ver seus detalhes: etapas, etapa atual, tarefas
+1. Acessa o board e vê todos os processos InProgress da contabilidade em
+   kanban. Processos concluídos não aparecem aqui — ficam na vista de
+   histórico separada.
+2. As colunas do board são a união dos steps em que existem processos ativos.
+   A ordem segue a versão `Active` mais recente do template como referência
+   canônica. Steps presentes apenas em versões anteriores (Superseded)
+   aparecem ao final, na ordem relativa original. O contador não percebe
+   versões — só vê processos nos seus steps.
+3. Pode filtrar o board por tipo de processo (abertura, alteração, baixa).
+4. Abre um processo para ver seus detalhes: etapas, etapa atual, tarefas
    da etapa ativa, campos configuráveis e seus valores.
 
 **Execução de tarefas:**
@@ -57,14 +64,16 @@ ativo.
    (concluídas ou saltadas), a etapa fecha automaticamente e a próxima etapa
    ativa abre — sem nenhuma ação adicional do contador.
 6. Quando todas as etapas obrigatórias do processo estiverem concluídas, o
-   processo conclui automaticamente. O card se move para a coluna "concluído".
+   processo conclui automaticamente. O card sai do board e passa a estar
+   acessível apenas pela vista de histórico.
 
 **Ações não permitidas e o que acontece:**
 
 - Tentar operar tarefas de uma etapa que não está ativa: ação bloqueada.
   O contador pode ver as etapas passadas e futuras mas não pode modificá-las.
 - Tentar deletar ou arquivar um processo concluído: essa ação não existe.
-  Processos concluídos são permanentes e visíveis na coluna "concluído".
+  Processos concluídos são permanentes e ficam acessíveis pela vista de
+  histórico (ver spec `societario-process-history`), não pelo board.
 - Tentar alterar o tipo de um processo já criado: essa ação não existe.
   O tipo é definido na criação e imutável.
 
@@ -92,13 +101,16 @@ igualmente ao AccountingEmployee.
 
 - **Criação → em andamento:** imediato na criação. Não há estado intermediário.
 - **Em andamento → concluído:** automático quando todas as etapas obrigatórias
-  do processo estão concluídas. O backend realiza a transição. Nenhuma ação
-  do contador.
+  do processo estão concluídas. O backend realiza a transição, remove o
+  processo do board ativo e publica o integration event
+  `WorkflowProcessCompleted`. Nenhuma ação do contador.
 
 **Restrições:**
 
 - "Concluído" é estado terminal. Processo concluído não volta a "em andamento".
 - Processo concluído é imutável. Não pode ser editado, deletado ou arquivado.
+- Processo concluído sai do board e passa a ser acessível apenas pela vista
+  de histórico (ver spec `societario-process-history`).
 
 ---
 
@@ -183,8 +195,24 @@ igualmente ao AccountingEmployee.
 - Tarefas de etapas que não estão ativas não podem ser modificadas.
 - Processos concluídos são permanentes. Não podem ser deletados, arquivados
   ou modificados.
-- O board exibe apenas os processos da contabilidade ativa do usuário. Ao
-  trocar de contabilidade, o contexto do board muda completamente.
+- O board exibe apenas processos InProgress da contabilidade ativa do usuário.
+  Processos concluídos saem do board e ficam na vista de histórico. Ao trocar
+  de contabilidade, o contexto do board muda completamente.
+- As colunas do board são a união dos steps presentes nos processos InProgress.
+  A ordem segue como referência canônica a versão `Active` mais recente do
+  template; steps presentes apenas em versões Superseded aparecem ao final na
+  ordem relativa original. Quando uma coluna esvazia e o template
+  correspondente é arquivado, a coluna desaparece naturalmente.
+- A projeção de leitura do board (MongoDB) é recalculada quando: um processo
+  muda de step, um template é ativado (recalcula ordem canônica) ou um
+  template é arquivado (remove colunas vazias).
+- Ao concluir, o processo publica o integration event `WorkflowProcessCompleted`
+  via RabbitMQ/MassTransit. Outras features consomem esse evento sem acoplar
+  ao módulo de processo (ex.: archive automático de templates Superseded).
+- A interface `IWorkflowProcessDataService` (declarada em WorkflowTemplate,
+  implementada na Web layer pelo módulo WorkflowProcess) expõe a verificação
+  "há processos InProgress para este TemplateId?", consumida por
+  WorkflowTemplate para bloquear archive manual e disparar archive automático.
 - Não há responsável atribuído a um processo. Qualquer membro da contabilidade
   pode operar qualquer processo.
 - A auditoria de tarefa (quem e quando concluiu ou saltou) é registrada
@@ -196,8 +224,8 @@ igualmente ao AccountingEmployee.
 
 ```
 Frontend precisa saber:
-  - Estado atual do processo (em andamento / concluído) e tipo, para renderizar
-    o card corretamente no kanban
+  - Estado atual do processo (em andamento) e tipo, para renderizar
+    o card corretamente no kanban (processos concluídos não aparecem no board)
   - Cliente-alvo do processo (texto livre), para exibir no card
   - Lista de etapas do processo com estado individual (não iniciada / em
     andamento / concluída) e se cada uma é obrigatória, para exibir o
@@ -211,6 +239,11 @@ Frontend precisa saber:
     criação de processo)
   - Quais tipos de processo (abertura, alteração, baixa) o template ativo
     suporta (para exibir apenas as opções válidas na criação)
+  - Estrutura de colunas do board já resolvida pela projeção: união de steps
+    de processos InProgress, ordenados pela versão Active mais recente, com
+    steps de versões Superseded ao final. O frontend não precisa conhecer
+    versões de template — só renderiza a lista de colunas que o backend
+    devolve.
 
 Backend precisa garantir:
   - Que a transição de estado de etapa e de processo acontece na mesma
@@ -219,7 +252,7 @@ Backend precisa garantir:
   - Que a resposta de conclusão/salto de tarefa inclui o estado atualizado
     do processo inteiro (etapas + estado do processo) para que o frontend
     reflita a mudança sem precisar de nova requisição
-  - Que o board retorna apenas processos da contabilidade do usuário
+  - Que o board retorna apenas processos InProgress da contabilidade do usuário
     autenticado, sem exceção
   - Que tentativas de operar tarefas em etapas inativas são rejeitadas com
     indicação clara do motivo
@@ -229,6 +262,13 @@ Backend precisa garantir:
     é rejeitada
   - Que a auditoria de tarefa é preenchida automaticamente com o usuário
     autenticado que realizou a ação, sem depender de input do frontend
+  - Que a projeção MongoDB do board é atualizada nos eventos: processo muda
+    de step, template é ativado, template é arquivado
+  - Que ao concluir o processo, o integration event `WorkflowProcessCompleted`
+    é publicado via RabbitMQ/MassTransit
+  - Que a interface `IWorkflowProcessDataService` (Web layer) está disponível
+    para que WorkflowTemplate consulte "há processos InProgress para este
+    TemplateId?"
 ```
 
 ---
@@ -248,13 +288,21 @@ etapa conclui automaticamente assim que o processo chega a ela, sem nenhuma
 ação do contador. O processo avança imediatamente para a próxima etapa
 obrigatória.
 
-**Poluição visual do kanban com processos concluídos**
-A coluna "concluído" acumula processos ao longo do tempo e pode poluir a visão
-operacional. Como tratar esse acúmulo (ocultação temporal, filtro padrão, visão
-separada do board ativo) é `[pergunta aberta]`. Restrição firme: qualquer
-tratamento deve ser puramente visual — os processos concluídos não podem ser
-removidos ou apagados, pois são a única memória estável da relação com o
-cliente-alvo.
+**Processos de versões diferentes do template no mesmo board**
+Quando uma nova versão do template é ativada, processos InProgress nascidos
+da versão anterior continuam executando a estrutura original. O board mostra
+todos juntos: as colunas são a união dos steps presentes nesses processos,
+ordenadas pela versão `Active` mais recente como referência canônica. Steps
+que existem apenas na versão Superseded aparecem ao final na ordem relativa
+original. O contador não percebe a coexistência de versões — só vê processos
+nos seus steps.
+
+**Coluna esvaziando após conclusão de último processo**
+Quando o último processo InProgress de um step (presente apenas em template
+Superseded) conclui, a coluna fica vazia. Se o template Superseded também é
+arquivado nesse momento (regra de archive automático em
+`societario-template-versioning`), a coluna desaparece do board na próxima
+recomputação da projeção.
 
 **Cliente-alvo em branco na criação**
 `[pergunta aberta]` A spec indica que criar um processo inclui "identificar o
