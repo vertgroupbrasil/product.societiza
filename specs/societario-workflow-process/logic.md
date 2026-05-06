@@ -1,7 +1,9 @@
 ---
-status: draft
+status: approved
 spec: societario-workflow-process
 created_at: 2026-04-16
+approved_at: 2026-05-06
+revised_at: 2026-05-06
 ---
 
 # WorkflowProcess — Lógica de Negócio
@@ -27,64 +29,71 @@ está fora do escopo desta feature.
 
 1. Acessa o board da contabilidade ativa.
 2. Inicia a criação de um novo processo.
-3. Escolhe o tipo: abertura, alteração ou baixa.
-4. Preenche o cliente-alvo (nome do cliente em texto livre).
-5. Confirma a criação.
-6. O processo nasce com a primeira etapa em andamento. As demais etapas
-   nascem como não iniciadas. Todas as tarefas da etapa ativa nascem como
-   pendentes.
-7. O contador vê o novo card no board, na coluna da primeira etapa.
+3. Informa o `TemplateId` do template a ser usado.
+4. Escolhe o tipo: Abertura, Alteração ou Baixa.
+5. Preenche o cliente-alvo (texto livre).
+6. Confirma a criação.
+7. O sistema valida que o template está Active e materializa todos os steps,
+   tasks, fields e task fields como instâncias — independente do ProcessType.
+   O `TemplateVersion` é registrado como string snapshot.
+8. A primeira step fica InProgress; as demais ficam NotStarted.
+   Todas as tasks de todas as steps nascem como Pending.
+9. O contador vê o novo card no board, na coluna da primeira step.
 
-Se não houver template ativo na contabilidade: a opção de criar processo
-não está disponível. O contador vê uma indicação de que não há template
-ativo.
+Se o template informado não existir ou não estiver Active: a criação é
+recusada.
 
 **Operação do board:**
 
-1. Acessa o board e vê todos os processos InProgress da contabilidade em
-   kanban. Processos concluídos não aparecem aqui — ficam na vista de
+1. Acessa o board e vê todos os processos InProgress da contabilidade
+   em kanban, organizados por step.
+2. Processos concluídos não aparecem no board — ficam na vista de
    histórico separada.
-2. As colunas do board são a união dos steps em que existem processos ativos.
-   A ordem segue a versão `Active` mais recente do template como referência
-   canônica. Steps presentes apenas em versões anteriores (Superseded)
-   aparecem ao final, na ordem relativa original. O contador não percebe
-   versões — só vê processos nos seus steps.
-3. Pode filtrar o board por tipo de processo (abertura, alteração, baixa).
-4. Abre um processo para ver seus detalhes: etapas, etapa atual, tarefas
-   da etapa ativa, campos configuráveis e seus valores.
+3. Pode filtrar o board por tipo de processo.
+4. Abre um processo para ver seus detalhes: steps, status individual
+   de cada step, tasks com status, campos e seus valores.
 
 **Execução de tarefas:**
 
-1. Dentro da etapa ativa do processo, o contador vê as tarefas pendentes.
-2. Preenche os campos configuráveis da etapa ou da tarefa, se houver.
-3. Conclui uma tarefa → tarefa passa para "concluída".
-4. Ou salta uma tarefa → tarefa passa para "saltada" com registro de quem
-   e quando.
-5. Quando todas as tarefas obrigatórias da etapa ativa estiverem resolvidas
-   (concluídas ou saltadas), a etapa fecha automaticamente e a próxima etapa
-   ativa abre — sem nenhuma ação adicional do contador.
-6. Quando todas as etapas obrigatórias do processo estiverem concluídas, o
-   processo conclui automaticamente. O card sai do board e passa a estar
-   acessível apenas pela vista de histórico.
+1. Dentro de qualquer step do processo, o contador vê as tasks.
+2. Preenche os campos configuráveis de steps ou tasks a qualquer momento,
+   independentemente do status do step ou da task.
+3. **Concluir uma task** → task passa para Completed.
+   - Pré-condições: task em Pending; step em NotStarted ou InProgress;
+     task obrigatória (IsOptional = false) de Order imediatamente anterior
+     deve estar resolvida (Completed ou Skipped).
+4. **Pular uma task** → task passa para Skipped.
+   - Pré-condições: task em Pending; IsOptional = true; task obrigatória
+     de Order imediatamente anterior deve estar resolvida.
+5. **Reverter uma task** → task volta para Pending.
+   - Pré-condições: task em Completed ou Skipped; nenhum step downstream
+     (Order superior ao step atual) pode ter progresso (tasks Completed ou
+     Skipped em steps posteriores).
+   - Ao reverter, se o step estava Completed, volta para InProgress.
+6. Quando todas as required tasks (IsOptional = false) do step estiverem
+   resolvidas (Completed ou Skipped), o step fecha automaticamente e o
+   próximo step passa para InProgress — sem nenhuma ação adicional.
+7. Quando todos os steps do processo estiverem Completed, o processo
+   conclui automaticamente. O card sai do board.
 
 **Ações não permitidas e o que acontece:**
 
-- Tentar operar tarefas de uma etapa que não está ativa: ação bloqueada.
-  O contador pode ver as etapas passadas e futuras mas não pode modificá-las.
+- Tentar completar ou pular uma task cuja task obrigatória anterior não
+  está resolvida: recusado com erro de pré-condição.
+- Tentar pular uma task obrigatória (IsOptional = false): recusado.
+- Tentar reverter uma task com progresso em steps downstream: recusado.
+- Tentar criar processo com template inexistente ou não-Active: recusado.
 - Tentar deletar ou arquivar um processo concluído: essa ação não existe.
-  Processos concluídos são permanentes e ficam acessíveis pela vista de
-  histórico (ver spec `societario-process-history`), não pelo board.
 - Tentar alterar o tipo de um processo já criado: essa ação não existe.
-  O tipo é definido na criação e imutável.
 
 ---
 
 ### AccountingEmployee
 
 O AccountingEmployee tem as mesmas capacidades operacionais que o
-AccountingAdmin dentro do board: cria processos, abre detalhes, conclui
-e salta tarefas, preenche campos. Nenhuma operação do board é restrita por
-perfil — qualquer membro da contabilidade pode operar qualquer processo.
+AccountingAdmin dentro do board: cria processos, abre detalhes, completa,
+pula e reverte tasks, preenche campos. Nenhuma operação do board é restrita
+por perfil — qualquer membro da contabilidade pode operar qualquer processo.
 
 As mesmas ações não permitidas descritas para o AccountingAdmin aplicam-se
 igualmente ao AccountingEmployee.
@@ -95,128 +104,188 @@ igualmente ao AccountingEmployee.
 
 ### Processo
 
-**Estados:** em andamento · concluído
+**Estados:** InProgress · Completed
 
 **Transições:**
 
-- **Criação → em andamento:** imediato na criação. Não há estado intermediário.
-- **Em andamento → concluído:** automático quando todas as etapas obrigatórias
-  do processo estão concluídas. O backend realiza a transição, remove o
-  processo do board ativo e publica o integration event
+- **Criação → InProgress:** imediato na criação. Não há estado intermediário.
+- **InProgress → Completed:** automático quando todos os steps do processo
+  estão Completed. O backend realiza a transição e publica o domain event
   `WorkflowProcessCompleted`. Nenhuma ação do contador.
 
 **Restrições:**
 
-- "Concluído" é estado terminal. Processo concluído não volta a "em andamento".
-- Processo concluído é imutável. Não pode ser editado, deletado ou arquivado.
-- Processo concluído sai do board e passa a ser acessível apenas pela vista
-  de histórico (ver spec `societario-process-history`).
+- Completed é estado terminal. Processo concluído não volta a InProgress.
+- Processo concluído é imutável. Nenhuma operação é aceita sobre ele.
+- Processo concluído sai do board e passa a ser acessível pela vista de
+  histórico.
 
 ---
 
-### Etapa do processo
+### Step do processo (`ProcessStepInstance`)
 
-**Estados:** não iniciada · em andamento · concluída
+**Estados:** NotStarted · InProgress · Completed
 
 **Transições:**
 
-- **Criação do processo → primeira etapa fica em andamento:** imediato na
-  criação. Todas as demais etapas nascem como "não iniciadas".
-- **Em andamento → concluída:** automático quando todas as tarefas obrigatórias
-  da etapa estão resolvidas (concluídas ou saltadas). O backend realiza a
-  transição e simultaneamente move a próxima etapa para "em andamento".
-- **Não iniciada → em andamento:** automático quando a etapa anterior conclui.
+- **Criação do processo:**
+  - Primeira step → InProgress (imediato).
+  - Demais steps → NotStarted.
+- **InProgress → Completed:** automático quando todas as required tasks
+  (IsOptional = false) do step estão resolvidas (Completed ou Skipped).
+  Simultaneamente, a próxima step passa para InProgress.
+- **NotStarted → InProgress:** automático quando a step anterior conclui.
+- **Completed → InProgress:** ao reverter uma task, se o step estava
+  Completed, ele volta para InProgress.
 
 **Restrições:**
 
-- Uma etapa só fica "em andamento" se a etapa anterior foi concluída.
-- Não há salto de etapa inteira — o contador age no nível das tarefas.
-- Etapa "concluída" não volta a estados anteriores.
-- Etapa sem tarefas obrigatórias conclui automaticamente assim que o processo
-  chega a ela, sem nenhuma ação do contador.
+- Um step só fica InProgress quando o step anterior está Completed.
+- Não existe ação explícita de "avançar step" — é consequência das tasks.
+- Step com zero required tasks (IsOptional = false) conclui automaticamente
+  assim que o processo a alcança, sem nenhuma ação do contador.
+- Step revertido para InProgress pode ser auto-concluído novamente assim
+  que suas required tasks forem resolvidas.
 
 ---
 
-### Tarefa da etapa
+### Task do processo (`ProcessStepTaskInstance`)
 
-**Estados:** pendente · concluída · saltada
+**Estados:** Pending · Completed · Skipped · Reverted
 
 **Transições:**
 
-- **Criação do processo → todas as tarefas nascem como pendentes.**
-- **Pendente → concluída:** o contador marca a tarefa como concluída.
-- **Pendente → saltada:** o contador marca a tarefa como saltada manualmente.
+- **Criação do processo → todas as tasks nascem como Pending.**
+- **Pending → Completed:** contador completa a task.
+  - Pré-condições: step em NotStarted ou InProgress; task obrigatória
+    (IsOptional = false) de Order imediatamente anterior deve estar Completed
+    ou Skipped. Se não houver task obrigatória anterior, não há restrição.
+- **Pending → Skipped:** contador pula a task.
+  - Pré-condições: IsOptional = true; task obrigatória de Order
+    imediatamente anterior deve estar Completed ou Skipped.
+- **Completed → Reverted** ou **Skipped → Reverted:** contador reverte.
+  - Pré-condição: nenhum step com Order superior ao step atual pode ter
+    tasks Completed ou Skipped (sem progresso downstream).
+  - A task volta para Pending após o revert.
+  - Se o step estava Completed, volta para InProgress.
+
+**O que conta como "resolvida" para fins de auto-conclusão de step:**
+
+- Completed → conta.
+- Skipped → conta.
+- Pending / Reverted → não conta.
 
 **Restrições:**
 
-- Tarefas de etapas que não estão "em andamento" não podem ser modificadas.
-- Tarefa "concluída" ou "saltada" não volta ao estado "pendente".
-- Tarefa saltada é registrada: quem saltou e quando. Justificativa não é
-  obrigatória.
-- Tarefa saltada conta como "resolvida" para fins de avanço automático da etapa.
+- Tasks com IsOptional = false não podem ser puladas.
+- Completed e Skipped são reversíveis (via revert) enquanto não houver
+  progresso downstream.
+- Reverted é o estado transitório: a task está de volta a Pending e pode
+  ser completada ou pulada novamente.
 
 ---
 
-### Campo de etapa / campo de tarefa
+### Campo (`ProcessStepFieldInstance` / `ProcessStepTaskFieldInstance`)
 
-**Estados:** não preenchido · preenchido
+**Estados:** sem valor · com valor (determinado pela presença de Value ≠ null)
 
 **Transições:**
 
-- Preenchido pelo contador a qualquer momento enquanto a etapa está ativa.
-- Valor salvo no preenchimento, com timestamp.
+- Pode ser preenchido a qualquer momento, independentemente do status do
+  step ou da task associada.
+- O preenchimento registra `Value` (string) e `FilledAt` (timestamp).
+- Um campo pode ser re-preenchido: sobrescreve `Value` e `FilledAt`.
 
 **Restrições:**
 
-- Campos de etapas que não estão ativas não podem ser preenchidos.
-- Se um campo é do tipo Select, apenas os valores configurados na lista de
-  opções do template são válidos.
+- `Value` é sempre string. A interpretação por FieldType (Text, Boolean,
+  Integer, Select, Date) é responsabilidade do cliente.
+- O backend não valida o conteúdo do `Value` — nenhuma rejeição por formato.
 
 ---
 
 ## 3. Regras de negócio
 
-- Um processo pertence à contabilidade em que foi criado via identificador
-  da contabilidade. Nunca cruza para outra contabilidade.
-- Um processo só pode ser criado se a contabilidade tiver um template ativo.
-- O tipo do processo (abertura, alteração, baixa) é definido na criação e
-  não pode ser alterado.
-- No momento da criação, apenas as etapas e tarefas do template marcadas
-  para o tipo escolhido são incluídas no processo. Etapas e tarefas fora do
-  tipo não existem no processo.
-- O template é congelado no processo no momento da criação com sua versão
-  atual. Mudanças posteriores no template não afetam processos já existentes.
-- O avanço de etapa e a conclusão do processo são automáticos — o backend
-  realiza as transições como consequência de ações do contador sobre tarefas.
-  Não existe ação explícita de "avançar etapa" pelo contador.
-- Uma etapa conclui quando todas as suas tarefas obrigatórias estão
-  resolvidas (concluídas ou saltadas).
-- O processo conclui quando todas as suas etapas obrigatórias estão concluídas.
-- Tarefas de etapas que não estão ativas não podem ser modificadas.
-- Processos concluídos são permanentes. Não podem ser deletados, arquivados
-  ou modificados.
-- O board exibe apenas processos InProgress da contabilidade ativa do usuário.
-  Processos concluídos saem do board e ficam na vista de histórico. Ao trocar
-  de contabilidade, o contexto do board muda completamente.
-- As colunas do board são a união dos steps presentes nos processos InProgress.
-  A ordem segue como referência canônica a versão `Active` mais recente do
-  template; steps presentes apenas em versões Superseded aparecem ao final na
-  ordem relativa original. Quando uma coluna esvazia e o template
-  correspondente é arquivado, a coluna desaparece naturalmente.
-- A projeção de leitura do board (MongoDB) é recalculada quando: um processo
-  muda de step, um template é ativado (recalcula ordem canônica) ou um
-  template é arquivado (remove colunas vazias).
-- Ao concluir, o processo publica o integration event `WorkflowProcessCompleted`
-  via RabbitMQ/MassTransit. Outras features consomem esse evento sem acoplar
-  ao módulo de processo (ex.: archive automático de templates Superseded).
-- A interface `IWorkflowProcessDataService` (declarada em WorkflowTemplate,
-  implementada na Web layer pelo módulo WorkflowProcess) expõe a verificação
-  "há processos InProgress para este TemplateId?", consumida por
-  WorkflowTemplate para bloquear archive manual e disparar archive automático.
-- Não há responsável atribuído a um processo. Qualquer membro da contabilidade
-  pode operar qualquer processo.
-- A auditoria de tarefa (quem e quando concluiu ou saltou) é registrada
-  automaticamente sem nenhum input adicional do contador além da própria ação.
+### Criação do processo (`CreateWorkflowProcess`)
+
+- O TemplateId deve referenciar um template existente com status Active.
+- O sistema busca o template via `IWorkflowTemplateDataService` e mapeia
+  para snapshots: `TemplateStepSnapshot`, `TemplateStepTaskSnapshot`,
+  `TemplateStepFieldSnapshot`, `TemplateStepTaskFieldSnapshot`.
+- Todos os steps, tasks, fields e task fields do template são materializados
+  como instâncias no processo. Não há filtro por ProcessType.
+- O ProcessType (Abertura, Alteração, Baixa) é registrado no processo para
+  classificação e filtragem; não influencia quais instâncias são criadas.
+- O `TemplateVersion` é capturado como string e gravado no processo.
+- A primeira step fica InProgress; as demais ficam NotStarted.
+- Todas as tasks nascem Pending.
+- O processo pertence à contabilidade via AccountancyId e nunca cruza para
+  outra contabilidade.
+
+### Completar tarefa (`CompleteProcessTask`)
+
+- Task deve estar Pending.
+- Step associado deve estar NotStarted ou InProgress.
+- A task obrigatória (IsOptional = false) de Order imediatamente anterior
+  (Order - 1) deve estar Completed ou Skipped. Se não existir task
+  obrigatória anterior, não há restrição sequencial.
+- Ao completar, se todas as required tasks do step estiverem resolvidas
+  → step auto-completa (InProgress → Completed) e próxima step passa para
+  InProgress.
+- Se todos os steps do processo estiverem Completed → processo auto-completa
+  (InProgress → Completed) e o domain event `WorkflowProcessCompleted` é
+  publicado.
+
+### Pular tarefa (`SkipProcessTask`)
+
+- Task deve estar Pending.
+- IsOptional deve ser true. Tasks obrigatórias (IsOptional = false) não
+  podem ser puladas.
+- A task obrigatória de Order imediatamente anterior deve estar Completed
+  ou Skipped. Se não existir, não há restrição sequencial.
+- Ao pular, a mesma lógica de auto-conclusão de step e processo aplica-se.
+
+### Reverter tarefa (`RevertProcessTask`)
+
+- Task deve estar Completed ou Skipped.
+- Nenhum step com Order superior ao step atual pode ter progresso — nenhuma
+  task Completed ou Skipped em steps downstream.
+- Ao reverter: task volta para Pending.
+- Se o step estava Completed: step volta para InProgress.
+- Não há operação de "reverter step inteiro" ou "reverter processo" —
+  apenas task individual.
+
+### Preencher campo (`FillProcessStepField` / `FillProcessTaskField`)
+
+- Qualquer campo pode ser preenchido a qualquer momento, independente do
+  status do step ou da task.
+- `Value` é string. Não há validação de formato — o FieldType orienta
+  apenas a renderização no cliente.
+- O preenchimento registra `FilledAt` com o timestamp da operação.
+- Re-preenchimento sobrescreve os valores anteriores.
+
+### Geral
+
+- O board exibe apenas processos InProgress da contabilidade ativa do
+  usuário autenticado.
+- Processos concluídos são permanentes e imutáveis. Qualquer operação sobre
+  um processo Completed é rejeitada.
+- Não há responsável atribuído a um processo.
+- Não há registro de userId em tasks (quem completou, pulou ou reverteu).
+  Os timestamps (CompletedAt, SkippedAt) são registrados; o ator não.
+
+---
+
+### Tabela de pré-condições por operação
+
+| Operação | Pré-condição |
+|---|---|
+| `CompleteProcessTask` | Task Pending; step NotStarted ou InProgress; task obrigatória anterior (Order-1) Completed ou Skipped |
+| `SkipProcessTask` | Task Pending; IsOptional = true; task obrigatória anterior (Order-1) Completed ou Skipped |
+| `RevertProcessTask` | Task Completed ou Skipped; sem progresso em steps downstream |
+| `FillProcessStepField` | Nenhuma — qualquer campo pode ser preenchido a qualquer momento |
+| `FillProcessTaskField` | Nenhuma — qualquer campo pode ser preenchido a qualquer momento |
+| `CreateWorkflowProcess` | Template Active; TargetClient preenchido |
 
 ---
 
@@ -224,51 +293,49 @@ igualmente ao AccountingEmployee.
 
 ```
 Frontend precisa saber:
-  - Estado atual do processo (em andamento) e tipo, para renderizar
-    o card corretamente no kanban (processos concluídos não aparecem no board)
-  - Cliente-alvo do processo (texto livre), para exibir no card
-  - Lista de etapas do processo com estado individual (não iniciada / em
-    andamento / concluída) e se cada uma é obrigatória, para exibir o
-    progresso do processo
-  - Tarefas da etapa ativa com estado (pendente / concluída / saltada),
-    se são obrigatórias, e seus campos configuráveis com valores preenchidos
-  - Campos da etapa ativa com valores preenchidos
-  - Registro de quem e quando concluiu ou saltou cada tarefa (para auditoria
-    visível ao contador)
-  - Se a contabilidade tem template ativo (para habilitar ou desabilitar a
-    criação de processo)
-  - Quais tipos de processo (abertura, alteração, baixa) o template ativo
-    suporta (para exibir apenas as opções válidas na criação)
-  - Estrutura de colunas do board já resolvida pela projeção: união de steps
-    de processos InProgress, ordenados pela versão Active mais recente, com
-    steps de versões Superseded ao final. O frontend não precisa conhecer
-    versões de template — só renderiza a lista de colunas que o backend
-    devolve.
+  - AccountancyId do usuário autenticado — para buscar o board correto
+  - Lista de templates Active disponíveis — para oferecer ao contador
+    na criação do processo (TemplateId é informado explicitamente)
+  - Estado atual do processo (InProgress) e ProcessType — para renderizar
+    o card corretamente no kanban
+  - TargetClient (texto livre) — para exibir no card
+  - Lista de steps com Status individual (NotStarted/InProgress/Completed),
+    Order e CompletedAt
+  - Tasks de cada step com Status (Pending/Completed/Skipped/Reverted),
+    IsOptional, Order, CompletedAt, SkippedAt
+  - Campos de step e de task com FieldType, Options, Value, FilledAt
+  - Que completar ou pular uma task pode desencadear auto-conclusão de step
+    e de processo — recarregar estado completo do processo após cada ação
+  - Que reverter uma task pode reabrir o step — recarregar estado completo
+  - Que skip é permitido apenas para IsOptional = true — desabilitar ação
+    de skip para tasks obrigatórias na interface
+  - Que campos podem ser preenchidos a qualquer momento — não há bloqueio
+    por status de step ou task
+  - Que a pré-condição de task obrigatória anterior pode causar rejeição —
+    exibir mensagem contextualizada ao contador
+  - Que revert é bloqueado quando há progresso downstream — exibir motivo
 
 Backend precisa garantir:
-  - Que a transição de estado de etapa e de processo acontece na mesma
-    operação de conclusão ou salto de tarefa — o frontend não faz chamada
-    separada para "avançar etapa"
-  - Que a resposta de conclusão/salto de tarefa inclui o estado atualizado
-    do processo inteiro (etapas + estado do processo) para que o frontend
-    reflita a mudança sem precisar de nova requisição
-  - Que o board retorna apenas processos InProgress da contabilidade do usuário
-    autenticado, sem exceção
-  - Que tentativas de operar tarefas em etapas inativas são rejeitadas com
-    indicação clara do motivo
-  - Que tentativas de criar processo sem template ativo são rejeitadas
-  - Que a versão do template é registrada no processo no momento da criação
-  - Que processos concluídos são imutáveis — qualquer operação sobre eles
-    é rejeitada
-  - Que a auditoria de tarefa é preenchida automaticamente com o usuário
-    autenticado que realizou a ação, sem depender de input do frontend
-  - Que a projeção MongoDB do board é atualizada nos eventos: processo muda
-    de step, template é ativado, template é arquivado
-  - Que ao concluir o processo, o integration event `WorkflowProcessCompleted`
-    é publicado via RabbitMQ/MassTransit
-  - Que a interface `IWorkflowProcessDataService` (Web layer) está disponível
-    para que WorkflowTemplate consulte "há processos InProgress para este
-    TemplateId?"
+  - Que CreateWorkflowProcess busca o template via IWorkflowTemplateDataService
+    e valida que está Active antes de materializar
+  - Que todos os steps/tasks/fields são materializados independentemente do
+    ProcessType
+  - Que o TemplateVersion é capturado como string no momento da criação
+  - Que CompleteProcessTask verifica: task Pending; step NotStarted ou
+    InProgress; task obrigatória anterior resolvida
+  - Que SkipProcessTask verifica: IsOptional = true; task obrigatória
+    anterior resolvida
+  - Que RevertProcessTask verifica: task Completed ou Skipped; sem progresso
+    downstream; reverte step se estava Completed
+  - Que auto-conclusão de step e processo ocorre na mesma operação de
+    complete ou skip — sem chamada separada do frontend
+  - Que FillProcessStepField e FillProcessTaskField não verificam status do
+    step ou da task — qualquer campo é preenchível a qualquer momento
+  - Que o board retorna apenas processos InProgress da contabilidade do
+    usuário autenticado, sem exceção
+  - Que processos concluídos são imutáveis — qualquer operação é rejeitada
+  - Que ao concluir o processo, o domain event WorkflowProcessCompleted é
+    publicado via EventBus (MassTransit/RabbitMQ)
 ```
 
 ---
@@ -276,56 +343,48 @@ Backend precisa garantir:
 ## 5. Casos de borda
 
 **Template arquivado após criação do processo**
-O processo possui a fotografia do template na versão em que foi criado. O
-arquivamento posterior do template não afeta nenhum processo existente. Todos
-continuam operacionais com a versão congelada. Novos processos não podem mais
-ser criados a partir do template arquivado.
+O processo possui a fotografia do template (TemplateVersion como string).
+O arquivamento posterior do template não afeta nenhum processo existente.
+Todos continuam operacionais com a estrutura congelada. Novos processos não
+podem ser criados a partir do template arquivado.
 
-**Etapa sem tarefas obrigatórias**
-Uma etapa pode ter zero tarefas obrigatórias — seja porque tem apenas tarefas
-opcionais, seja porque não tem tarefas para o tipo do processo. Nesse caso, a
-etapa conclui automaticamente assim que o processo chega a ela, sem nenhuma
-ação do contador. O processo avança imediatamente para a próxima etapa
-obrigatória.
+**Step sem required tasks (zero tasks com IsOptional = false)**
+Uma step sem required tasks conclui automaticamente assim que o processo a
+alcança, sem nenhuma ação do contador. Se todas as steps não tiverem required
+tasks, o processo pode concluir automaticamente logo após a criação — esse
+é um comportamento válido do sistema.
 
-**Processos de versões diferentes do template no mesmo board**
-Quando uma nova versão do template é ativada, processos InProgress nascidos
-da versão anterior continuam executando a estrutura original. O board mostra
-todos juntos: as colunas são a união dos steps presentes nesses processos,
-ordenadas pela versão `Active` mais recente como referência canônica. Steps
-que existem apenas na versão Superseded aparecem ao final na ordem relativa
-original. O contador não percebe a coexistência de versões — só vê processos
-nos seus steps.
+**Cliente-alvo em branco**
+O `TargetClient` é validado como obrigatório na camada de Application
+(validação do comando de criação). A criação é recusada se o campo estiver
+vazio.
 
-**Coluna esvaziando após conclusão de último processo**
-Quando o último processo InProgress de um step (presente apenas em template
-Superseded) conclui, a coluna fica vazia. Se o template Superseded também é
-arquivado nesse momento (regra de archive automático em
-`societario-template-versioning`), a coluna desaparece do board na próxima
-recomputação da projeção.
+**Campos não preenchidos ao completar ou pular tarefa**
+Completar ou pular uma task não verifica se seus campos foram preenchidos.
+O preenchimento de campos é independente do ciclo de vida da task. O
+`FieldType` orienta a renderização; o backend não interpreta o `Value` para
+validar formato ou obrigatoriedade.
 
-**Cliente-alvo em branco na criação**
-`[pergunta aberta]` A spec indica que criar um processo inclui "identificar o
-cliente", sugerindo que o campo é obrigatório. Mas não há declaração explícita
-de obrigatoriedade. Precisa de decisão antes da implementação: o campo
-cliente-alvo é obrigatório para criar o processo ou pode ficar em branco?
+**Reverter task com step já auto-concluído**
+Se o step estava Completed (auto-concluiu), reverter uma task desfaz essa
+conclusão: step volta para InProgress. Para que o revert seja permitido,
+nenhum step de Order superior pode ter progresso. O contador deve reverter
+tasks em ordem reversa caso queira retroceder múltiplos steps.
 
-**Campos obrigatórios não preenchidos ao concluir tarefa**
-`[pergunta aberta]` O sistema permite marcar uma tarefa como concluída mesmo
-que seus campos obrigatórios não estejam preenchidos? E ao saltar uma tarefa?
-Se não, o backend deve rejeitar a operação e o frontend precisa mostrar quais
-campos faltam. Se sim, campos obrigatórios são apenas uma indicação visual.
-Precisa de decisão antes da implementação.
+**Revert em cadeia**
+Não há operação de "reverter step inteiro". Para reabrir um step concluído,
+o contador deve reverter individualmente as tasks Completed ou Skipped nele.
+Cada revert individual verifica que não há progresso downstream.
 
-**Processo com todas as etapas opcionais para o tipo escolhido**
-`[pergunta aberta]` Se o template não tiver nenhuma etapa marcada como
-obrigatória para o tipo de processo selecionado, o processo concluiria
-automaticamente logo após a criação. Isso é comportamento esperado ou uma
-inconsistência que deve ser prevenida? Precisa de validação ao criar o
-processo ou ao configurar o template.
+**Task revertida em step que estava Completed reabre o step**
+Ao reverter a última task resolvida de um step Completed, o step volta para
+InProgress. Se o step seguinte havia iniciado (InProgress) como consequência
+do auto-avanço, o revert é bloqueado — o step downstream já tem o step em
+InProgress, o que configura progresso downstream.
 
-**Premissa dos ~70% de etapas compartilhadas entre tipos**
-A hipótese de que abertura, alteração e baixa compartilham a maior parte das
-etapas não foi validada na operação real. Se os fluxos divergirem mais do que
-o esperado, a estrutura de materialização por tipo (`appliesTo`) pode precisar
-de revisão de design antes de escalar para outros templates.
+**Processo com todas as tasks de todos os steps opcionais**
+Se todas as tasks de todos os steps têm IsOptional = true, cada step
+auto-conclui ao ser alcançado (sem required tasks bloqueando). O processo
+pode concluir automaticamente sem nenhuma ação do contador após a criação.
+Esse comportamento é válido — a responsabilidade de evitar templates sem
+required tasks pertence à validação de ativação do WorkflowTemplate.
